@@ -25,20 +25,54 @@ def save_as_docx(doc_path: str) -> str:
     return new_file_abs
 
 
+def is_heading(paragraph) -> bool:
+    if paragraph.text == "":
+        return False
+
+    if 'Heading' in paragraph.style.name:
+        return True
+
+    # Start of by initializing an empty string to store bold words inside a run
+    run_bold_text = ''
+
+    # Iterate over all runs of the curr paragraph and collect all the words which are bold
+    for run in paragraph.runs:
+        if run.bold:
+            run_bold_text = run_bold_text + run.text
+
+    # Now check if run_bold_text matches the entire paragraph text.
+    # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
+    return run_bold_text == str(paragraph.text) and run_bold_text != ''
+
+
+def display_doc_content(path: str):
+    doc = docx.Document(path)
+    heading_with_paragraphs = {}
+    heading = ""
+    paragraphs = []
+    for paragraph in doc.paragraphs:
+        if is_heading(paragraph):
+            if heading != "" and len(paragraphs) > 0:
+                heading_with_paragraphs[heading] = "\n".join(paragraphs)
+            heading = paragraph.text
+            paragraphs.clear()
+        else:
+            paragraphs.append(paragraph.text)
+
+    for heading, paragraph in heading_with_paragraphs.items():
+        print(f'--------------------\nHeading: {heading}\nIt\'s paragraph:\n{paragraph}--------------------')
+        print()
+
+
 if __name__ == '__main__':
     try:
-        doc = docx.Document(sys.argv[1])
+        doc_path = sys.argv[1]
+        if doc_path.endswith(".doc"):
+            doc_abspath = os.path.abspath(doc_path)
+            doc_path = save_as_docx(doc_abspath)
+
+        display_doc_content(doc_path)
+        exit(0)
     except PackageNotFoundError:
         print(f'File not found at "{sys.argv[1]}"')
         exit(1)
-    except ValueError:
-        # ValueError means that input file with .doc extension
-        doc_abspath = os.path.abspath(sys.argv[1])
-        # Converts .doc to .docx
-        docx_path = save_as_docx(doc_abspath)
-        doc = docx.Document(docx_path)
-
-    for paragraph in doc.paragraphs:
-        print(paragraph.text)
-
-    exit(0)
