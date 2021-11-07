@@ -152,4 +152,4 @@ crashlytics-build.properties
 fabric.properties
 
 # Private .docx/.doc files
-documents/
+doc/
