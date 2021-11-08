@@ -43,8 +43,7 @@ def is_heading(paragraph) -> bool:
 
     # Now check if run_bold_text matches the entire paragraph text.
     # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
-    return run_bold_text != '' and run_bold_text == str(paragraph.text) and (
-            run_bold_text.lstrip()[0].isdigit() or run_bold_text.lstrip()[0].isalnum())
+    return run_bold_text != '' and run_bold_text == str(paragraph.text)
 
 
 # Returns a regular expression to search for headers with a structure similar to the heading
