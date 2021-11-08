@@ -43,31 +43,64 @@ def is_heading(paragraph) -> bool:
 
     # Now check if run_bold_text matches the entire paragraph text.
     # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
-    return run_bold_text != '' and run_bold_text == str(paragraph.text) and run_bold_text.lstrip()[0].isdigit()
+    return run_bold_text != '' and run_bold_text == str(paragraph.text) and (
+            run_bold_text.lstrip()[0].isdigit() or run_bold_text.lstrip()[0].isalnum())
+
+
+# Returns a regular expression to search for headers with a structure similar to the heading
+def get_regex_from_heading(heading: str) -> str:
+    # Divide the title into 2 parts to separate the numbering from the rest of the title text
+    split_heading = heading.split(' ', 2)
+    heading_numbering = split_heading[0]
+    regex = '^'
+    for character in heading_numbering:
+        if character.isdigit():
+            regex += '[0-9]'
+        elif character.isalpha():
+            regex += '[а-я]'
+        else:
+            regex += f'\{character}'
+    regex += ' .*'
+    return regex
+
+
+# Returns a string representation of the first header that is specified in GOST standard, that is, "общие сведения"
+def get_first_heading(doc) -> str:
+    for paragraph in doc.paragraphs:
+        if is_heading(paragraph) and re.match(r'.*общ[а-я]{2,3} сведен[а-я]{2,3}.*', paragraph.text,
+                                              re.IGNORECASE | re.M):
+            return paragraph.text
+    return ''
 
 
 def display_doc_content(path: str):
     doc = docx.Document(path)
+    first_heading = get_first_heading(doc)
+    heading_regex = get_regex_from_heading(first_heading)
     heading_with_paragraphs = {}
-    heading = ''
+    curr_heading = ''
     paragraphs = []
+
     for paragraph in doc.paragraphs:
-        if is_heading(paragraph):
-            if heading != '' and len(paragraphs) > 0:
-                heading_with_paragraphs[heading] = '\n'.join(paragraphs)
-            heading = paragraph.text
+        if is_heading(paragraph) and re.match(fr'{heading_regex}', paragraph.text, re.I):
+            if curr_heading != '' and len(paragraphs) > 0:
+                heading_with_paragraphs[curr_heading] = '\n'.join(paragraphs)
+            curr_heading = paragraph.text
             paragraphs.clear()
         else:
             paragraphs.append(paragraph.text)
+    if curr_heading != '' and len(paragraphs) > 0:
+        heading_with_paragraphs[curr_heading] = '\n'.join(paragraphs)
 
-    for heading, paragraph in heading_with_paragraphs.items():
-        print(f'--------------------\nHeading: {heading}\nIt\'s paragraph:\n{paragraph}--------------------')
+    for curr_heading, paragraph in heading_with_paragraphs.items():
+        print(
+            f'--------------------\nHeading: {curr_heading}\nIt\'s paragraph:\n{paragraph.rstrip()}\n--------------------')
         print()
 
 
 if __name__ == '__main__':
     try:
-        doc_path = 'doc/tz_08.docx'
+        doc_path = sys.argv[1]
         if doc_path.endswith('.doc'):
             doc_abspath = os.path.abspath(doc_path)
             doc_path = save_as_docx(doc_abspath)
