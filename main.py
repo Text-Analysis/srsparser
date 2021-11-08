@@ -25,8 +25,9 @@ def save_as_docx(doc_path: str) -> str:
     return new_file_abs
 
 
+# Checks whether the paragraph is a header
 def is_heading(paragraph) -> bool:
-    if paragraph.text == "":
+    if paragraph.text == '':
         return False
 
     if 'Heading' in paragraph.style.name:
@@ -38,22 +39,22 @@ def is_heading(paragraph) -> bool:
     # Iterate over all runs of the curr paragraph and collect all the words which are bold
     for run in paragraph.runs:
         if run.bold:
-            run_bold_text = run_bold_text + run.text
+            run_bold_text += run.text
 
     # Now check if run_bold_text matches the entire paragraph text.
     # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
-    return run_bold_text == str(paragraph.text) and run_bold_text != ''
+    return run_bold_text != '' and run_bold_text == str(paragraph.text) and run_bold_text.lstrip()[0].isdigit()
 
 
 def display_doc_content(path: str):
     doc = docx.Document(path)
     heading_with_paragraphs = {}
-    heading = ""
+    heading = ''
     paragraphs = []
     for paragraph in doc.paragraphs:
         if is_heading(paragraph):
-            if heading != "" and len(paragraphs) > 0:
-                heading_with_paragraphs[heading] = "\n".join(paragraphs)
+            if heading != '' and len(paragraphs) > 0:
+                heading_with_paragraphs[heading] = '\n'.join(paragraphs)
             heading = paragraph.text
             paragraphs.clear()
         else:
@@ -66,8 +67,8 @@ def display_doc_content(path: str):
 
 if __name__ == '__main__':
     try:
-        doc_path = sys.argv[1]
-        if doc_path.endswith(".doc"):
+        doc_path = 'doc/tz_08.docx'
+        if doc_path.endswith('.doc'):
             doc_abspath = os.path.abspath(doc_path)
             doc_path = save_as_docx(doc_abspath)
 
