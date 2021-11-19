@@ -149,12 +149,11 @@ def get_headings_with_texts(doc: docx.Document) -> dict:
             if curr_heading_text != "":
                 result[curr_heading_text] = "\n".join(curr_heading_paragraphs)
 
-            curr_heading_text = re.sub(patterns, "", paragraph.text.strip())
+            curr_heading_text = paragraph.text.strip()
             curr_heading_paragraphs.clear()
         elif is_paragraph_contains_heading(paragraph):
             heading_with_text = paragraph.text.split(":")
-            heading, text = heading_with_text[0], ":".join(heading_with_text[1:])
-            heading = re.sub(patterns, "", heading.strip())
+            heading, text = heading_with_text[0].strip(), ":".join(heading_with_text[1:])
             if text != "":
                 result[heading] = text
         else:
@@ -189,8 +188,9 @@ def restore_headings_hierarchy(headings_with_texts: dict) -> dict:
                         max_ratio = ratio
                         text_parent = section
                 if text_parent is not None:
-                    heading_without_numbering = " ".join(heading.split()[1:])
-                    Section(name=heading_without_numbering, text=text, parent=text_parent)
+                    if re.match('^([а-яё0-9][).])+.+', heading):
+                        heading = " ".join(heading.split(" ")[1:])
+                    Section(name=heading, text=text, parent=text_parent)
     return tree.get_dict_from_root()
 
 
