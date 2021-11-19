@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import docx
 from os.path import basename, splitext, abspath
 import re
@@ -65,34 +67,6 @@ def is_paragraph_heading(paragraph: Paragraph) -> bool:
     return run_bold_text.strip() == paragraph.text.strip() and paragraph.paragraph_format.alignment is None
 
 
-def is_paragraph_contains_heading(p: Paragraph) -> bool:
-    """
-    Checks whether the paragraph contains a section heading.
-
-    :return: True if the paragraph contains the heading, otherwise — False.
-    """
-    global example_tree
-
-    # a potential section title can be placed before a colon in a paragraph (e.g. 1.2 Условное обозначение: АИС
-    # «Товарищество собственников жилья».)
-    possible_heading = p.text.split(":")[0]
-
-    possible_heading = re.sub(patterns, "", possible_heading)
-
-    if possible_heading == "":
-        return False
-
-    for leaf_section in example_tree.get_leaf_sections():
-        if strings_similarity(leaf_section.name, possible_heading) >= 0.6:
-            return True
-
-    for section in example_tree.get_sections():
-        if strings_similarity(section.name, possible_heading) >= 0.6:
-            return True
-
-    return False
-
-
 def is_table_element(doc_with_tables: docx.Document, paragraph: Paragraph) -> bool:
     """
     Checks whether a paragraph is a table element.
@@ -132,10 +106,12 @@ def iter_paragraphs(parent):
                         yield child_paragraph
 
 
-def get_headings_with_texts(doc: docx.Document) -> dict:
+def get_headings_with_texts_p_styles(doc: docx.Document) -> dict:
     """
+    Returns headings and their corresponding text content based on the analysis of paragraph styles.
+
     :param doc: docx.Document containing headings and the corresponding text.
-    :return: a collection of pairs of the form: {"heading_text": "text under heading", ...}.
+    :return: a collection of pairs of the form: "heading" — "text under heading".
     """
     result = {}
 
@@ -151,47 +127,110 @@ def get_headings_with_texts(doc: docx.Document) -> dict:
 
             curr_heading_text = paragraph.text.strip()
             curr_heading_paragraphs.clear()
-        elif is_paragraph_contains_heading(paragraph):
-            heading_with_text = paragraph.text.split(":")
-            heading, text = heading_with_text[0].strip(), ":".join(heading_with_text[1:])
-            if text != "":
-                result[heading] = text
         else:
-            curr_heading_paragraphs.append(paragraph.text)
+            curr_heading_paragraphs.append(paragraph.text.strip())
     return result
 
 
-def restore_headings_hierarchy(headings_with_texts: dict) -> dict:
+def is_paragraph_contains_heading(p: Paragraph) -> bool:
+    """
+    Checks whether the paragraph contains a section heading.
+
+    :return: True if the paragraph contains the heading, otherwise — False.
+    """
+    global example_tree
+
+    # a potential section title can be placed before a colon in a paragraph (e.g. 1.2 Условное обозначение: АИС
+    # «Товарищество собственников жилья».)
+    possible_heading = p.text.split(":")[0]
+
+    possible_heading = re.sub(patterns, "", possible_heading)
+
+    if possible_heading == "":
+        return False
+
+    for leaf_section in example_tree.get_leaf_sections():
+        if strings_similarity(leaf_section.name, possible_heading) >= 0.6:
+            return True
+
+    return False
+
+
+def get_headings_with_texts_containing_check(doc: docx.Document) -> dict:
+    """
+    Returns headings and their corresponding text content based on the analysis of the paragraph content.
+    The potential heading may be to the left of the first colon.
+
+    :param doc: docx.Document containing headings and the corresponding text.
+    :return: a collection of pairs of the form: "heading" — "text under heading".
+    """
+    result = {}
+
+    for paragraph in iter_paragraphs(doc):
+        if is_paragraph_contains_heading(paragraph) and not is_table_element(doc, paragraph):
+            p_split = paragraph.text.split(":")
+
+            heading = p_split[0]
+            heading = re.sub(patterns, "", heading).strip()
+
+            text = ":".join(p_split[1:]).strip()
+
+            if heading != "" and text != "":
+                result[heading] = text
+    return result
+
+
+def get_headings_with_texts_containing_and_appending(doc: docx.Document) -> dict:
+    """
+    Returns headers and their corresponding text content based on the analysis of the paragraph content and combining
+    several paragraphs under one section.
+
+    :param doc: docx.Document containing headings and the corresponding text.
+    :return: a collection of pairs of the form: "heading" — "text under heading".
+    """
+    result = {}
+
+    # remember the heading and appropriate paragraphs
+    curr_heading = ""
+    curr_heading_paragraphs = []
+
+    for paragraph in iter_paragraphs(doc):
+        p_split = paragraph.text.split(":")
+        if is_paragraph_contains_heading(paragraph) and not is_table_element(doc, paragraph):
+            if curr_heading != "" and curr_heading_paragraphs:
+                result[curr_heading] = " .".join(curr_heading_paragraphs)
+
+            curr_heading = re.sub(patterns, "", p_split[0]).strip()
+            curr_heading_paragraphs.clear()
+            curr_heading_paragraphs.append(":".join(p_split[1:]).strip())
+        elif re.match('^([а-яё0-9][).])+.+', p_split[0]):
+            heading = re.sub(patterns, "", p_split[0]).strip()
+            text = ":".join(p_split[1:]).strip()
+            if heading != "" and text != "":
+                result[heading] = text
+        else:
+            if not is_paragraph_heading(paragraph) and paragraph.text != "":
+                curr_heading_paragraphs.append(paragraph.text.strip())
+    return result
+
+
+def restore_headings_hierarchy(headings_with_texts: dict, hierarchy_tree: SectionsTree):
     """
     Restores the hierarchy of headings expressed by nesting levels.
 
     :param headings_with_texts: see: get_headings_with_texts(s: docx.Document).
-    :return: returns a dictionary representing the hierarchy of document sections.
+    :param hierarchy_tree: the titles of this tree_skeleton will correspond to the texts.
     """
-    tree = SectionsTree()
     for heading, text in headings_with_texts.items():
-        if text != "":
-            max_ratio = 0.5
-            text_parent = None
-            for section in tree.get_leaf_sections():
-                ratio = strings_similarity(section.name, heading)
-                if ratio >= max_ratio:
-                    max_ratio = ratio
-                    text_parent = section
-            if text_parent is not None:
-                text_parent.text = text
-            else:
-                max_ratio = 0
-                for section in tree.get_sections():
-                    ratio = strings_similarity(section.name, heading)
-                    if ratio >= max_ratio:
-                        max_ratio = ratio
-                        text_parent = section
-                if text_parent is not None:
-                    if re.match('^([а-яё0-9][).])+.+', heading):
-                        heading = " ".join(heading.split(" ")[1:])
-                    Section(name=heading, text=text, parent=text_parent)
-    return tree.get_dict_from_root()
+        max_ratio = 0.5
+        text_parent = None
+        for section in hierarchy_tree.get_leaf_sections():
+            ratio = strings_similarity(section.name, heading)
+            if ratio >= max_ratio:
+                max_ratio = ratio
+                text_parent = section
+        if text_parent is not None and text_parent.text == "":
+            text_parent.text = text
 
 
 if __name__ == "__main__":
@@ -202,11 +241,23 @@ if __name__ == "__main__":
             path = save_as_docx(doc_abspath)
 
         document = docx.Document(path)
-        headings_with_texts = get_headings_with_texts(document)
-        headings_hierarchy = restore_headings_hierarchy(headings_with_texts)
+
+        # initialize the template of the section tree, which will be filled with texts corresponding to the sections
+        tree_skeleton = SectionsTree()
+
+        # we are looking for texts in three different ways that will correspond to the sections of the tree skeleton:
+        # 1
+        headings_with_texts = get_headings_with_texts_p_styles(document)
+        restore_headings_hierarchy(headings_with_texts, tree_skeleton)
+        # 2
+        headings_with_texts = get_headings_with_texts_containing_check(document)
+        restore_headings_hierarchy(headings_with_texts, tree_skeleton)
+        # 3
+        headings_with_texts = get_headings_with_texts_containing_and_appending(document)
+        restore_headings_hierarchy(headings_with_texts, tree_skeleton)
 
         with open(f"out/{splitext(basename(path))[0]}.json", "w", encoding='UTF8') as file:
-            dump(headings_hierarchy, file, ensure_ascii=False)
+            dump(tree_skeleton.get_dict_from_root(), file, ensure_ascii=False)
         exit(0)
     except PackageNotFoundError:
         print(f"File not found at {sys.argv[1]}")
