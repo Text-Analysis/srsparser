@@ -1,5 +1,3 @@
-import difflib
-import distance
 import docx
 from os.path import basename, splitext, abspath
 import re
@@ -13,25 +11,29 @@ from docx.oxml.text.paragraph import CT_P
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 from win32com.client import constants
+from sections_tree import SectionsTree, Section
+from nlp import strings_similarity, patterns
+
+example_tree = SectionsTree()
 
 
 def save_as_docx(doc_path: str) -> str:
     """
-    Converts `.doc` file to a file with the `.docx` extension.
+    Converts `.s` file to a file with the `.docx` extension.
 
-    :param doc_path: the path to the file with the .doc extension
+    :param doc_path: the path to the file with the .s extension
     :return: the path to the file with the .docx extension
     """
-    # Opening MS Word
+    # opening MS Word
     word = win32.gencache.EnsureDispatch("Word.Application")
     word_doc = word.Documents.Open(doc_path)
     word_doc.Activate()
 
-    # Rename path file with .docx
+    # rename path file with .docx
     new_file_abs = abspath(doc_path)
     new_file_abs = re.sub(r"\.\w+$", ".docx", new_file_abs)
 
-    # Save and Close
+    # save and Close
     word.ActiveDocument.SaveAs(new_file_abs, FileFormat=constants.wdFormatXMLDocument)
     word_doc.Close(False)
 
@@ -40,9 +42,9 @@ def save_as_docx(doc_path: str) -> str:
 
 def is_paragraph_heading(paragraph: Paragraph) -> bool:
     """
-    Checks whether the paragraph is a header.
+    Checks whether the paragraph is a heading.
 
-    :return: True if the paragraph is the title, otherwise — False.
+    :return: True if the paragraph is the heading, otherwise — False.
     """
     if paragraph.text.strip() == "":
         return False
@@ -50,24 +52,52 @@ def is_paragraph_heading(paragraph: Paragraph) -> bool:
     if "Heading" in paragraph.style.name:
         return True
 
-    # Start of by initializing an empty string to store bold words inside a run
+    # start of by initializing an empty string to store bold words inside a run
     run_bold_text = ""
 
-    # Iterate over all runs of the curr paragraph and collect all the words which are bold
+    # iterate over all runs of the curr paragraph and collect all the words which are bold
     for run in paragraph.runs:
         if run.bold:
             run_bold_text += run.text
 
-    # Now check if run_bold_text matches the entire paragraph text.
-    # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
+    # now check if run_bold_text matches the entire paragraph text.
+    # if it matches, it means all the words in the current paragraph are bold and can be considered as a heading
     return run_bold_text.strip() == paragraph.text.strip() and paragraph.paragraph_format.alignment is None
+
+
+def is_paragraph_contains_heading(p: Paragraph) -> bool:
+    """
+    Checks whether the paragraph contains a section heading.
+
+    :return: True if the paragraph contains the heading, otherwise — False.
+    """
+    global example_tree
+
+    # a potential section title can be placed before a colon in a paragraph (e.g. 1.2 Условное обозначение: АИС
+    # «Товарищество собственников жилья».)
+    possible_heading = p.text.split(":")[0]
+
+    possible_heading = re.sub(patterns, "", possible_heading)
+
+    if possible_heading == "":
+        return False
+
+    for leaf_section in example_tree.get_leaf_sections():
+        if strings_similarity(leaf_section.name, possible_heading) >= 0.6:
+            return True
+
+    for section in example_tree.get_sections():
+        if strings_similarity(section.name, possible_heading) >= 0.6:
+            return True
+
+    return False
 
 
 def is_table_element(doc_with_tables: docx.Document, paragraph: Paragraph) -> bool:
     """
     Checks whether a paragraph is a table element.
 
-    :return: True if the paragraph is the title, otherwise — False.
+    :return: True if the paragraph is a table element, otherwise — False.
     """
     for table in doc_with_tables.tables:
         for row in table.rows:
@@ -121,91 +151,47 @@ def get_headings_with_texts(doc: docx.Document) -> dict:
 
             curr_heading_text = paragraph.text.strip()
             curr_heading_paragraphs.clear()
+        elif is_paragraph_contains_heading(paragraph):
+            heading_with_text = paragraph.text.split(":")
+            heading, text = heading_with_text[0].strip(), ":".join(heading_with_text[1:])
+            if text != "":
+                result[heading] = text
         else:
             curr_heading_paragraphs.append(paragraph.text)
     return result
 
 
-def restore_headings_hierarchy(headings_with_texts: dict) -> list:
+def restore_headings_hierarchy(headings_with_texts: dict) -> dict:
     """
     Restores the hierarchy of headings expressed by nesting levels.
 
-    :param headings_with_texts: see: get_headings_with_texts(doc: docx.Document).
-    :return: a list containing a collection of pairs of the form: {"section_name": "...", "text": "..."} or
-    {"section_name": "", "sub_sections": [{"section_name": "...", "text": "..."}, {"section_name": "...", "text":
-    "..."}]}.
+    :param headings_with_texts: see: get_headings_with_texts(s: docx.Document).
+    :return: returns a dictionary representing the hierarchy of document sections.
     """
-    global nesting_levels, completed_levels
-
-    hierarchy = []
-    for heading, heading_text in headings_with_texts.items():
-        rec_add_heading_in_hierarchy(hierarchy, nesting_levels, heading, heading_text)
-        if completed_levels > 1:
-            nesting_levels -= (nesting_levels - completed_levels)
-            completed_levels = 0
-    return hierarchy
-
-
-def strings_similarity(s1: str, s2: str) -> float:
-    """
-    Determines the similarity coefficient of strings `s1` and `s2`.
-
-    :return: 0.0 — completely dissimilar, 1.0 — equal.
-    """
-    diff = difflib.SequenceMatcher(None, s1, s2).ratio()
-    sor = 1 - distance.sorensen(s1, s2)
-    jac = 1 - distance.jaccard(s1, s2)
-    return (diff + sor + jac) / 3
-
-
-nesting_levels = 0  # the number of nesting levels from the topmost element to the lowest element in the hierarchy
-completed_levels = 0  # the number of nesting levels passed in the process of compiling the header hierarchy
-last_heading_section = None
-
-
-def rec_add_heading_in_hierarchy(hierarchy: list, nesting_level: int, heading: str, heading_text: str):
-    """
-    Recursively moves through hierarchy and determines where to insert the heading along with its contents (future
-    subheadings or text).
-
-    :param hierarchy: a list representing the hierarchy of nesting or its separate part.
-    :param nesting_level: the number of nesting levels remaining before the leaf element in the hierarchy.
-    :param heading: heading name.
-    :param heading_text: the text corresponding to the heading.
-    """
-    global nesting_levels, completed_levels, last_heading_section
-
-    # if the hierarchy has 0 levels of nesting
-    if nesting_level == 0:
-        if last_heading_section is not None:
-            # if the heading is the parent for another heading (this is evidenced by an empty string in
-            # heading_text[1], in place of which the child heading should stand with its own text)
-            if heading_text == "":
-                heading_section = {"section_name": heading, "sub_sections": []}
-                last_heading_section["sub_sections"].append(heading_section)
-                nesting_levels += 1
-                last_heading_section = heading_section
+    tree = SectionsTree()
+    for heading, text in headings_with_texts.items():
+        if text != "":
+            max_ratio = 0.5
+            text_parent = None
+            for section in tree.get_leaf_sections():
+                ratio = strings_similarity(section.name, heading)
+                if ratio >= max_ratio:
+                    max_ratio = ratio
+                    text_parent = section
+            if text_parent is not None:
+                text_parent.text = text
             else:
-                last_heading_section["sub_sections"].append({"section_name": heading, "text": heading_text})
-        else:
-            if heading_text == "":
-                heading_section = {"section_name": heading, "sub_sections": []}
-                hierarchy.append(heading_section)
-                nesting_levels += 1
-                last_heading_section = heading_section
-            else:
-                hierarchy.append({"section_name": heading, "text": heading_text})
-    # if the hierarchy has one or more levels of nesting
-    else:
-        if hierarchy[len(hierarchy) - 1].get("sub_sections") is not None:
-            ratio = strings_similarity(hierarchy[len(hierarchy) - 1]["section_name"].strip(), heading.strip())
-            if ratio >= 0.5:
-                last_heading_section = hierarchy[len(hierarchy) - 1]
-                completed_levels += 1
-            rec_add_heading_in_hierarchy(hierarchy[len(hierarchy) - 1]["sub_sections"], nesting_level - 1, heading,
-                                         heading_text)
-        else:
-            rec_add_heading_in_hierarchy(hierarchy, 0, heading, heading_text)
+                max_ratio = 0
+                for section in tree.get_sections():
+                    ratio = strings_similarity(section.name, heading)
+                    if ratio >= max_ratio:
+                        max_ratio = ratio
+                        text_parent = section
+                if text_parent is not None:
+                    if re.match('^([а-яё0-9][).])+.+', heading):
+                        heading = " ".join(heading.split(" ")[1:])
+                    Section(name=heading, text=text, parent=text_parent)
+    return tree.get_dict_from_root()
 
 
 if __name__ == "__main__":
@@ -216,8 +202,8 @@ if __name__ == "__main__":
             path = save_as_docx(doc_abspath)
 
         document = docx.Document(path)
-        heading_with_texts = get_headings_with_texts(document)
-        headings_hierarchy = restore_headings_hierarchy(heading_with_texts)
+        headings_with_texts = get_headings_with_texts(document)
+        headings_hierarchy = restore_headings_hierarchy(headings_with_texts)
 
         with open(f"out/{splitext(basename(path))[0]}.json", "w", encoding='UTF8') as file:
             dump(headings_hierarchy, file, ensure_ascii=False)
