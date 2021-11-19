@@ -12,7 +12,9 @@ from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 from win32com.client import constants
 from sections_tree import SectionsTree, Section
-from nlp import strings_similarity
+from nlp import strings_similarity, patterns
+
+example_tree = SectionsTree()
 
 
 def save_as_docx(doc_path: str) -> str:
@@ -22,16 +24,16 @@ def save_as_docx(doc_path: str) -> str:
     :param doc_path: the path to the file with the .s extension
     :return: the path to the file with the .docx extension
     """
-    # Opening MS Word
+    # opening MS Word
     word = win32.gencache.EnsureDispatch("Word.Application")
     word_doc = word.Documents.Open(doc_path)
     word_doc.Activate()
 
-    # Rename path file with .docx
+    # rename path file with .docx
     new_file_abs = abspath(doc_path)
     new_file_abs = re.sub(r"\.\w+$", ".docx", new_file_abs)
 
-    # Save and Close
+    # save and Close
     word.ActiveDocument.SaveAs(new_file_abs, FileFormat=constants.wdFormatXMLDocument)
     word_doc.Close(False)
 
@@ -50,17 +52,45 @@ def is_paragraph_heading(paragraph: Paragraph) -> bool:
     if "Heading" in paragraph.style.name:
         return True
 
-    # Start of by initializing an empty string to store bold words inside a run
+    # start of by initializing an empty string to store bold words inside a run
     run_bold_text = ""
 
-    # Iterate over all runs of the curr paragraph and collect all the words which are bold
+    # iterate over all runs of the curr paragraph and collect all the words which are bold
     for run in paragraph.runs:
         if run.bold:
             run_bold_text += run.text
 
-    # Now check if run_bold_text matches the entire paragraph text.
-    # If it matches, it means all the words in the current paragraph are bold and can be considered as a heading
+    # now check if run_bold_text matches the entire paragraph text.
+    # if it matches, it means all the words in the current paragraph are bold and can be considered as a heading
     return run_bold_text.strip() == paragraph.text.strip() and paragraph.paragraph_format.alignment is None
+
+
+def is_paragraph_contains_heading(p: Paragraph) -> bool:
+    """
+    Checks whether the paragraph contains a section heading.
+
+    :return: True if the paragraph contains the heading, otherwise — False.
+    """
+    global example_tree
+
+    # a potential section title can be placed before a colon in a paragraph (e.g. 1.2 Условное обозначение: АИС
+    # «Товарищество собственников жилья».)
+    possible_heading = p.text.split(":")[0]
+
+    possible_heading = re.sub(patterns, "", possible_heading)
+
+    if possible_heading == "":
+        return False
+
+    for leaf_section in example_tree.get_leaf_sections():
+        if strings_similarity(leaf_section.name, possible_heading) >= 0.7:
+            return True
+
+    for section in example_tree.get_sections():
+        if strings_similarity(section.name, possible_heading) >= 0.7:
+            return True
+
+    return False
 
 
 def is_table_element(doc_with_tables: docx.Document, paragraph: Paragraph) -> bool:
@@ -121,6 +151,11 @@ def get_headings_with_texts(doc: docx.Document) -> dict:
 
             curr_heading_text = paragraph.text.strip()
             curr_heading_paragraphs.clear()
+        elif is_paragraph_contains_heading(paragraph):
+            heading_with_text = paragraph.text.split(":")
+            heading, text = heading_with_text[0], ":".join(heading_with_text[1:])
+            if text != "":
+                result[heading] = text
         else:
             curr_heading_paragraphs.append(paragraph.text)
     return result

@@ -34,11 +34,12 @@ def strings_similarity(s1: str, s2: str) -> float:
     x_list = lemmatize(s1.lower())
     y_list = lemmatize(s2.lower())
 
-    # sw contains the list of stopwords
+    if not x_list or not y_list:
+        return 0.0
+
     l1 = []
     l2 = []
 
-    # remove stop words from the string
     x_set = {w for w in x_list}
     y_set = {w for w in y_list}
 
@@ -53,8 +54,8 @@ def strings_similarity(s1: str, s2: str) -> float:
             l2.append(1)
         else:
             l2.append(0)
-    c = 0
 
+    c = 0
     # cosine formula
     for i in range(len(rvector)):
         c += l1[i] * l2[i]
