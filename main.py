@@ -83,11 +83,11 @@ def is_paragraph_contains_heading(p: Paragraph) -> bool:
         return False
 
     for leaf_section in example_tree.get_leaf_sections():
-        if strings_similarity(leaf_section.name, possible_heading) >= 0.7:
+        if strings_similarity(leaf_section.name, possible_heading) >= 0.6:
             return True
 
     for section in example_tree.get_sections():
-        if strings_similarity(section.name, possible_heading) >= 0.7:
+        if strings_similarity(section.name, possible_heading) >= 0.6:
             return True
 
     return False
@@ -149,11 +149,12 @@ def get_headings_with_texts(doc: docx.Document) -> dict:
             if curr_heading_text != "":
                 result[curr_heading_text] = "\n".join(curr_heading_paragraphs)
 
-            curr_heading_text = paragraph.text.strip()
+            curr_heading_text = re.sub(patterns, "", paragraph.text.strip())
             curr_heading_paragraphs.clear()
         elif is_paragraph_contains_heading(paragraph):
             heading_with_text = paragraph.text.split(":")
             heading, text = heading_with_text[0], ":".join(heading_with_text[1:])
+            heading = re.sub(patterns, "", heading.strip())
             if text != "":
                 result[heading] = text
         else:
@@ -184,7 +185,7 @@ def restore_headings_hierarchy(headings_with_texts: dict) -> dict:
                 max_ratio = 0
                 for section in tree.get_sections():
                     ratio = strings_similarity(section.name, heading)
-                    if ratio > max_ratio:
+                    if ratio >= max_ratio:
                         max_ratio = ratio
                         text_parent = section
                 if text_parent is not None:
