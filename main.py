@@ -11,7 +11,7 @@ from docx.oxml.text.paragraph import CT_P
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 from win32com.client import constants
-from sections_tree import SectionsTree, Section
+from sections_tree import SectionsTree
 from nlp import strings_similarity, patterns
 
 example_tree = SectionsTree()
