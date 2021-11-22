@@ -17,7 +17,7 @@ class Section(AnyNode):
 
 class SectionsTree:
     """
-    A class representing a tree_skeleton of sections of a text document.
+    A class representing a sections_tree_skeleton of sections of a text document.
     """
 
     def __init__(self):

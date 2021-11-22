@@ -4,7 +4,10 @@ from nltk import download, corpus
 
 download('stopwords')
 
-patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+numbering_pattern = "^([а-я0-9][.) ])+"
+special_characters = "!#$%&'()*+,/;<=>?@[\]^_`{|}~—\"\-"
+strip_spec_char_pattern = f"(^[{special_characters} ]+)|([{special_characters} ]+$)"
+patterns = f"[A-Za-z0-9{special_characters}]+"
 stopwords_ru = corpus.stopwords.words("russian")
 morph = MorphAnalyzer()
 
