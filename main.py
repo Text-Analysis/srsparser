@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import docx
 from os.path import basename, splitext, abspath
 import re
