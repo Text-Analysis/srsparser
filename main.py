@@ -6,6 +6,7 @@ from docx.opc.exceptions import PackageNotFoundError
 from word import DocxAnalyzer
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from json import dump
 
 load_dotenv()
 
@@ -19,6 +20,9 @@ if __name__ == "__main__":
         document = Document(path)
         analyzer = DocxAnalyzer(document)
         document_structure = analyzer.get_docx_structure()
+
+        with open(f"out/{splitext(basename(path))[0]}.json", "w", encoding='UTF8') as file:
+            dump(document_structure, file, ensure_ascii=False)
 
         client = MongoClient(getenv("CONNECTION_STRING"))
         db = client["documentsAnalysis"]

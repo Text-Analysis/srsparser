@@ -1,11 +1,11 @@
-import re
+from re import sub
 from pymorphy2 import MorphAnalyzer
 from nltk import download, corpus
 
-download('stopwords')
+download("stopwords")
 
 numbering_pattern = "^([а-я0-9][.) ])+"
-special_characters = "!#$%&'()*+,/;<=>?@[\]^_`{|}~—\"\-"
+special_characters = "!#$%&'()*+,/;<=>?@[\]^_`{|}~—\"\-."
 strip_spec_char_pattern = f"(^[{special_characters} ]+)|([{special_characters} ]+$)"
 patterns = f"[A-Za-z0-9{special_characters}]+"
 stopwords_ru = corpus.stopwords.words("russian")
@@ -16,13 +16,12 @@ def lemmatize(s: str) -> list:
     """
     Replaces all the word forms in the string with the initial forms.
     """
-    s = re.sub(patterns, " ", s)
+    s = sub(patterns, "", s)
     tokens = []
     for token in s.split():
         if token and token not in stopwords_ru:
             token = token.strip()
             token = morph.normal_forms(token)[0]
-
             tokens.append(token)
     return tokens
 
