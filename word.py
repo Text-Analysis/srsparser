@@ -18,15 +18,16 @@ class DocxAnalyzer:
     A class that analyzes a Word document with the technical specification and forms a tree structure based on it.
     """
 
-    def __init__(self, doc: Document):
+    def __init__(self, doc: Document, tree_tmpl: dict):
         """
         :param doc: the object of a Word document containing information about the technical specification.
+        :param tree_tmpl: section tree template.
         """
         self.doc = doc
 
         # A tree containing the approved structure of the technical specification, which will be filled by the
         # contents of the document
-        self.tree = SectionsTree()
+        self.tree = SectionsTree(tree_tmpl)
 
     def get_docx_structure(self) -> dict:
         """
