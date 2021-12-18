@@ -167,8 +167,8 @@ class Parser:
         """
         Converts `.s` file to a file with the `.docx` extension.
 
-        :param doc_path: the doc_path to the file with the .s extension
-        :return: the doc_path to the file with the .docx extension
+        :param doc_path: the path to the file with the .s extension
+        :return: the path to the file with the .docx extension
         """
         # opening MS Word
         word = win32.gencache.EnsureDispatch("Word.Application")
