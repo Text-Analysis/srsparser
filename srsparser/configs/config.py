@@ -6,7 +6,7 @@ NUMBERING_PATTERN = "^([а-я0-9][.) ])+"
 # NLP
 MIN_SIMILARITY_RATIO = 0.5
 
-download("stopwords")
+download("stopwords", quiet=True)
 STOPWORDS_RU = corpus.stopwords.words("russian")
 
 SPECIAL_CHARS = "!#$%&'()*+,/;<=>?@[\]^_`{|}~—\"\-."
