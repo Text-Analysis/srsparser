@@ -17,7 +17,7 @@ setup(
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/tmrrwnxtsn/srsparser',
     python_requires='>=3.7',
-    description='System for analyzing and uploading text documents with SRS to MongoDB',
+    description='A package for analyzing and uploading text documents with SRS to MongoDB',
     packages=find_packages(),
     install_requires=requirements,
     entry_points={
