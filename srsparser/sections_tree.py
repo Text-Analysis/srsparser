@@ -8,7 +8,7 @@ exporter = DictExporter()
 
 class Section(AnyNode):
     """
-    A class representing a section of a text document.
+    A class representing a section of the text document.
     """
 
     def __init__(self, name: str, parent=None, children=None, **kwargs):
@@ -21,14 +21,14 @@ class Section(AnyNode):
 
 class SectionsTree:
     """
-    A class representing a sections_tree_skeleton of sections of a text document.
+    A class representing the sections tree of the text document.
     """
 
-    def __init__(self, tree_template: dict):
+    def __init__(self, template: dict):
         """
-        :param tree_template: section tree template.
+        :param template: sections tree template.
         """
-        self.root = importer.import_(tree_template)
+        self.root = importer.import_(template)
 
     def get_leaf_sections(self) -> list:
         return [node for node in PreOrderIter(self.root, filter_=lambda n: hasattr(n, "text"))]
