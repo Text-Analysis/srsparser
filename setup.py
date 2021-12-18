@@ -12,7 +12,7 @@ requirements = [
 
 setup(
     name='srsparser',
-    version='0.0.5',
+    version='0.0.6',
     author='Pavel Kurmyza',
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/tmrrwnxtsn/srsparser',
