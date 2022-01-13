@@ -1,14 +1,12 @@
 import re
 from os.path import abspath
 
-import win32com.client as win32
 from docx import Document
 from docx.document import Document as DocumentWithTable
 from docx.oxml.table import CT_Tbl
 from docx.oxml.text.paragraph import CT_P
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
-from win32com.client import constants
 
 from srsparser import configs
 from srsparser.nlp import strings_similarity
@@ -161,26 +159,3 @@ class Parser:
                     if cell.text.strip() == paragraph.text.strip():
                         return True
         return False
-
-    @staticmethod
-    def save_as_docx(doc_path: str) -> str:
-        """
-        Converts `.s` file to a file with the `.docx` extension.
-
-        :param doc_path: the path to the file with the .s extension
-        :return: the path to the file with the .docx extension
-        """
-        # opening MS Word
-        word = win32.gencache.EnsureDispatch("Word.Application")
-        word_doc = word.Documents.Open(doc_path)
-        word_doc.Activate()
-
-        # rename doc_path file with .docx
-        new_file_abs = abspath(doc_path)
-        new_file_abs = re.sub(r"\.\w+$", ".docx", new_file_abs)
-
-        # save and close
-        word.ActiveDocument.SaveAs(new_file_abs, FileFormat=constants.wdFormatXMLDocument)
-        word_doc.Close(False)
-
-        return new_file_abs
