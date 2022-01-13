@@ -11,7 +11,7 @@ requirements = [
 
 setup(
     name='srsparser',
-    version='1.0.2',
+    version='1.0.3',
     author='Pavel Kurmyza',
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/tmrrwnxtsn/srsparser',

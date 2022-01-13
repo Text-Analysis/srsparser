@@ -40,3 +40,9 @@ class SectionsTree:
                 if hasattr(node, "text") and node.text == "":
                     node.parent = None
         return exporter.export(self.root)
+
+    def get_contents(self) -> str:
+        """
+        Returns the contents of the sections tree.
+        """
+        return "".join([node.text for node in self.get_leaf_sections()])
