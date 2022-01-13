@@ -68,7 +68,7 @@ def run(connection_string: str, doc_path: str, db_name: str, tmpl_coll_name: str
     tree_template = coll.find_one({"name": tmpl_name})["structure"]
 
     parser = Parser(tree_template)
-    document_structure = parser.parse_doc(doc_path)
+    document_structure = parser.parse_docx(doc_path)
 
     doc_name = splitext(basename(doc_path))[0]
 

@@ -1,5 +1,4 @@
 import re
-from os.path import abspath
 
 from docx import Document
 from docx.document import Document as DocumentWithTable
@@ -26,15 +25,12 @@ class Parser:
         """
         self.sections_tree = SectionsTree(sections_tree_template)
 
-    def parse_doc(self, doc_path: str) -> dict:
+    def parse_docx(self, doc_path: str) -> dict:
         """
         Returns doc structure based on sections tree template.
 
         :param doc_path: path to the MS Word document containing information about the requirement specification.
         """
-        if doc_path.endswith(".doc"):
-            doc_path = self.save_as_docx(abspath(doc_path))
-
         document = Document(doc_path)
         return self.get_docx_structure(document)
 
