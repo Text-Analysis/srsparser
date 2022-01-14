@@ -15,7 +15,7 @@ setup(
     version='1.0.4',
     author='Pavel Kurmyza',
     author_email='tmrrwnxtsn@gmail.com',
-    url='https://github.com/tmrrwnxtsn/srsparser',
+    url='https://github.com/Text-Analysis/srsparser',
     python_requires='>=3.7',
     description='A package for analyzing and uploading text documents with SRS to MongoDB',
     packages=find_packages(),
