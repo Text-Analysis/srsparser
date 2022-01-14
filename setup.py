@@ -6,12 +6,13 @@ requirements = [
     'pymorphy2>=0.9.1',
     'nltk>=3.6.5',
     'pymongo>=4.0.1',
-    'dnspython>=2.1.0'
+    'dnspython>=2.1.0',
+    'gensim>=4.1.2'
 ]
 
 setup(
     name='srsparser',
-    version='1.0.3',
+    version='1.0.4',
     author='Pavel Kurmyza',
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/tmrrwnxtsn/srsparser',
