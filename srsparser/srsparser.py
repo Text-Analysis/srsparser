@@ -44,7 +44,7 @@ class Parser:
         sections = self.get_sections_second(doc)
         self.fill_sections_tree(sections)
 
-        return self.sections_tree.get_dict_from_root()
+        return self.sections_tree.to_dict()
 
     def get_sections_first(self, doc: Document) -> dict:
         """
