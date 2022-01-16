@@ -26,6 +26,17 @@ def lemmatize(words: list) -> list:
     return list(map(lambda token: morph.normal_forms(token)[0], words))
 
 
+def excess_but(words: list, part_of_speech: str) -> list:
+    """
+    Excess words except chosen part of speech.
+
+    :param words: word list.
+    :param part_of_speech: part of speech (upper register).
+    :return: list with only part_of_speech.
+    """
+    return list(filter(lambda word: morph.parse(word)[0].tag.POS == part_of_speech, words))
+
+
 def tokenize(doc: str) -> list:
     """
     Preprocessing of a text document to obtain a list of tokens.
