@@ -9,7 +9,7 @@ exporter = DictExporter()
 
 class Section(AnyNode):
     """
-    A class representing a section of the text document.
+    Класс, представляющий раздел текстового документа с ТЗ.
     """
 
     def __init__(self, name: str, parent=None, children=None, **kwargs):
@@ -22,17 +22,17 @@ class Section(AnyNode):
 
 class SectionsTree:
     """
-    A class representing the sections tree of the text document.
+    Класс, представляющий дерево разделов текстового документа с ТЗ.
     """
 
     def __init__(self, template: dict):
         """
-        :param template: sections tree template.
+        :param template: шаблон дерева резделов текстового документа с ТЗ. Можно найти в коллекции MongoDB с шаблонами.
         """
         self.root = importer.import_(template)
 
     def to_dict(self) -> dict:
-        # exclude sections from the result for which there were no matches
+        # исключаем из результата листовые разделы, для которых при парсинге не заполнились поля text
         for children in LevelOrderGroupIter(self.root):
             for node in children:
                 if hasattr(node, "text") and node.text == "":
@@ -41,8 +41,8 @@ class SectionsTree:
 
     def get_leaf_sections(self, section_name="Техническое задание") -> list:
         """
-        Returns leaf elements of the whole sections tree (from root). If the parameter section_name is specified,
-        it returns leaf elements that are nested in the section of the same name with section_name.
+        Возвращает список листовых элементов дерева разделов относительно корневого раздела. Если явно указан параметр
+        `section_name`, то возвращается список листовых элементов относительно одноимённого раздела.
         """
         search_from_node = find_by_attr(self.root, name="name", value=section_name)
         if search_from_node:
@@ -51,7 +51,8 @@ class SectionsTree:
 
     def get_content(self, section_name="Техническое задание") -> str:
         """
-        Returns the content of the section tree (the totality of all text fields). If the parameter section_name is
-        specified, it returns the content that is inside the section named section_name.
+        Возвращает содержимое дерева разделов (совокупность значений всех полей `text`) относительно корневого раздела.
+        Если указан параметр `section_name`, то возвращается содержимое одноимённого раздела,
+        а не всего дерева разделов.
         """
         return "".join([node.text for node in self.get_leaf_sections(section_name)])

@@ -14,29 +14,29 @@ from srsparser.sections_tree import SectionsTree
 
 class Parser:
     """
-    Analyzes the MS Word document with the requirement specification and forms the tree structure based on
-    sections tree template.
+    Класс, анализирующий текстовые документы в формате .docx, содержащие ТЗ, и формирующий деревья разделов на основе
+    данных шаблонов.
     """
 
     def __init__(self, sections_tree_template: dict):
         """
-        :param sections_tree_template: a tree containing the approved structure of the requirement specification,
-            which will be filled by the contents of the MS Word document.
+        :param sections_tree_template: шаблон дерева разделов, содержащий в себе определённую структуру дерева
+            разделов, которая будет наполняться текстовым содержимым, найденным парсером.
         """
         self.sections_tree = SectionsTree(sections_tree_template)
 
-    def parse_docx(self, doc_path: str) -> dict:
+    def parse_docx(self, path: str) -> dict:
         """
-        Returns doc structure based on sections tree template.
+        Возвращает заполненную в соответствии с содержимым текстового документа с ТЗ структуру дерева разделов.
 
-        :param doc_path: path to the MS Word document containing information about the requirement specification.
+        :param path: путь к текстовому документу в формате .docx, содержащему ТЗ.
         """
-        document = Document(doc_path)
+        document = Document(path)
         return self.get_docx_structure(document)
 
     def get_docx_structure(self, doc: Document) -> dict:
         """
-        Get the structure of the document by parsing it in several ways.
+        Возвращает заполненную структуру дерева разделов текстового документа с ТЗ.
         """
         sections = self.get_sections_first(doc)
         self.fill_sections_tree(sections)
@@ -48,16 +48,15 @@ class Parser:
 
     def get_sections_first(self, doc: Document) -> dict:
         """
-        Returns sections based on the analysis of the paragraph content. The potential heading may be to the left of
-        the first colon.
+        Возвращает разделы, основываясь на анализе содержимого абзацев:
+        потенциальные заголовки разделов могут быть слева от первого вхождения символа ":"
+        (прим.: 1.2 Условное обозначение: АИС «Товарищество собственников жилья»).
 
-        :return: a collection of pairs of the form: "heading" — "text under heading".
+        :return: словарь пар вида: "заголовок раздела" — "содержимое заголовка раздела (текст под ним)".
         """
         result = {}
 
         for paragraph in self.iter_paragraphs(doc):
-            # a potential section title can be placed before a colon in a paragraph (e.g. 1.2 Условное обозначение: АИС
-            # «Товарищество собственников жилья».)
             p_text_split = paragraph.text.split(":", 1)
             if len(p_text_split) <= 1:
                 continue
@@ -69,18 +68,16 @@ class Parser:
 
     def get_sections_second(self, doc: Document) -> dict:
         """
-        Returns sections based on the analysis of the paragraph content.
+        Возвращает разделы, основываясь на положении абзацев в текстовом документе с ТЗ.
 
-        :return: a collection of pairs of the form: "heading" — "text under heading".
+        :return: словарь пар вида: "заголовок раздела" — "содержимое заголовка раздела (текст под ним)".
         """
         result = {}
-
-        # remember the heading and appropriate paragraphs
         curr_heading_text = ""
         curr_heading_paragraphs = []
 
         for paragraph in self.iter_paragraphs(doc):
-            # tables contain their own headings, which we do not take into account
+            # таблицы содержат свои заголовки, поэтому их не берём во внимание
             if self.is_heading_of_sec(paragraph.text) and not self.is_table_element(paragraph, doc):
                 if curr_heading_text != "":
                     result[curr_heading_text] = "\n".join(curr_heading_paragraphs)
@@ -94,7 +91,7 @@ class Parser:
 
     def fill_sections_tree(self, headings_with_texts: dict):
         """
-        Restores the sections tree structure expressed by nesting levels.
+        Заполняет структуру дерева разделов, выраженную уровнями вложенности разделов.
         """
         for heading, text in headings_with_texts.items():
             max_ratio = 0
@@ -108,12 +105,6 @@ class Parser:
                 text_parent.text = text
 
     def iter_paragraphs(self, parent):
-        """
-        Yield each paragraph and table child within `parent`, in document order.
-        Each returned value is an instance of `Paragraph`. `parent`
-        would most commonly be a reference to a main `Document` object, but
-        also works for a `_Cell` object, which itself can contain paragraphs and tables.
-        """
         if isinstance(parent, DocumentWithTable):
             parent_elm = parent.element.body
         elif isinstance(parent, _Cell):
@@ -131,11 +122,11 @@ class Parser:
                         for child_paragraph in self.iter_paragraphs(cell):
                             yield child_paragraph
 
-    def is_heading_of_sec(self, p_text: str) -> (bool, float):
+    def is_heading_of_sec(self, p_text: str) -> bool:
         """
-        Checks whether the p_text is a heading of the sections tree.
+        Проверяет, является ли абзац заголовком структуры дерева разделов.
 
-        :return: True if the p_text is a heading of the sections tree, otherwise — False.
+        :return: True — да, иначе — False.
         """
         for section in self.sections_tree.get_leaf_sections():
             if strings_similarity(section.name, p_text) >= configs.MIN_SIMILARITY_RATIO:
@@ -145,9 +136,9 @@ class Parser:
     @staticmethod
     def is_table_element(paragraph: Paragraph, doc: Document) -> bool:
         """
-        Checks whether a paragraph is a table element.
+        Проверяет, является ли абзац элементом таблицы.
 
-        :return: True if the paragraph is a table element, otherwise — False.
+        :return: True — да, иначе — False.
         """
         for table in doc.tables:
             for row in table.rows:

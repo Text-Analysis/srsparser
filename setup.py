@@ -12,12 +12,12 @@ requirements = [
 
 setup(
     name='srsparser',
-    version='1.0.5',
-    author='Pavel Kurmyza',
+    version='1.0.7',
+    author='Курмыза Павел',
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/Text-Analysis/srsparser',
     python_requires='>=3.7',
-    description='A package for analyzing and uploading text documents with SRS to MongoDB',
+    description='Пакет для анализа и загрузки текстовых документов в NoSQL СУБД MongoDB.',
     packages=find_packages(),
     install_requires=requirements,
     entry_points={

@@ -9,51 +9,56 @@ from srsparser import Parser
 
 def setup_args_parser():
     parser = ap.ArgumentParser(
-        description='System for analyzing and uploading text documents with SRS to MongoDB'
+        description="Пакет для анализа и загрузки текстовых документов в NoSQL СУБД MongoDB"
     )
 
     parser.add_argument(
-        'connection_string',
+        "connection_string",
         type=str,
-        help='connection string used to connect to a MongoDB'
+        help="строка подключения используется для подключения к MongoDB"
     )
 
     parser.add_argument(
-        'doc_path',
+        "doc_path",
         type=str,
-        help='the path to the MS Word document to be analyzed'
+        help="путь к текстовому документу в формате .docx, содержащему ТЗ"
     )
 
     parser.add_argument(
-        '-db',
-        dest='db',
+        "-db",
+        dest="db",
         type=str,
-        default='documentsAnalysis',
-        help='the name of the database that stores collections of templates and parsing results'
+        default="documentsAnalysis",
+        help="название базы данных MongoDB, "
+             "которая содержит в себе коллекции с шаблонами структур ТЗ и результатами парсинга"
     )
 
     parser.add_argument(
-        '-tc',
-        dest='tmpl_coll',
+        "-tc",
+        dest="tmpl_coll",
         type=str,
-        default='sectionTreeTemplates',
-        help='the name of the MongoDB collection where sections tree templates are stored'
+        default="sectionTreeTemplates",
+        help="название коллекции MongoDB, в которой хранятся шаблоны структур ТЗ, "
+             "в соответствии с которыми проводится парсинг текстового документа с ТЗ"
     )
 
     parser.add_argument(
-        '-t',
-        dest='tmpl',
+        "-t",
+        dest="tmpl",
         type=str,
-        default='default',
-        help='the name of the template on the basis of which the parsing will be performed'
+        default="default",
+        help="название шаблона структуры ТЗ, хранящегося в коллекции tmpl_coll, "
+             "в соответствии с которым проводится парсинг текстового документа с ТЗ"
     )
 
     parser.add_argument(
-        '-rc',
-        dest='results_coll',
+        "-rc",
+        dest="results_coll",
         type=str,
-        default='requirementsSpecifications',
-        help='the name of the MongoDB collection where the parsing results are stored'
+        default="requirementsSpecifications",
+        help="название коллекции MongoDB, в которой хранятся результаты анализа текстовых документов с ТЗ "
+             "(структуры, заполненные содержанием текстовых документов с ТЗ, "
+             "в соответствии с шаблоном и самим документом)"
     )
 
     return parser
@@ -82,9 +87,9 @@ def main():
     try:
         run(args.connection_string, args.doc_path, args.db, args.tmpl_coll, args.tmpl, args.results_coll)
     except PackageNotFoundError:
-        print(f"File not found at {args.doc_path}")
+        print(f"файл не найден по пути: {args.doc_path}")
     except Exception:
-        print("Unknown error")
+        print("неизвестная ошибка")
 
 
 if __name__ == "__main__":

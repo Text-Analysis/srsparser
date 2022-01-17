@@ -1,9 +1,9 @@
 from nltk import download, corpus
 
-# docx
+# регулярное выражение для определения элемента нумерации в строке
 NUMBERING_PATTERN = "^([а-я0-9][.) ])+"
 
-# NLP
+# минимальный приемлимый коэффициент сходимости двух строк для того, чтобы считать их похожими
 MIN_SIMILARITY_RATIO = 0.5
 
 download("stopwords", quiet=True)
