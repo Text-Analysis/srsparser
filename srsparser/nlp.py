@@ -62,6 +62,11 @@ def tokenize(text: str, part_of_speech="") -> list:
     return tokens
 
 
+# take second element for sort
+def takeSecond(elem):
+    return elem[1]
+
+
 def get_tf_idf_weights(structures: list, section_name="Техническое задание", part_of_speech="") -> list:
     """
     Возвращает TF-IDF веса слов для содержимого структур: для каждой структуры "вытаскивает" из разделов текстовое
@@ -98,6 +103,7 @@ def get_tf_idf_weights(structures: list, section_name="Техническое з
     tf_idf = TfidfModel(bow_corpus, smartirs="ltc")
     result = []
     for structure in tf_idf[bow_corpus]:
+        structure.sort(key=takeSecond, reverse=True)
         weight_tf_idf = []
         for id, freq in structure:
             weight_tf_idf.append([dictionary[id], around(freq, decimals=3)])

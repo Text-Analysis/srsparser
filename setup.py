@@ -12,7 +12,7 @@ requirements = [
 
 setup(
     name='srsparser',
-    version='1.0.7',
+    version='1.0.8',
     author='Курмыза Павел',
     author_email='tmrrwnxtsn@gmail.com',
     url='https://github.com/Text-Analysis/srsparser',
