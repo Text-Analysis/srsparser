@@ -63,7 +63,7 @@ class Parser:
 
             if self.is_heading_of_sec(p_text_split[0]) and not self.is_table_element(paragraph, doc):
                 if p_text_split[0] != "" and p_text_split[1] != "":
-                    result[p_text_split[0]] = p_text_split[1]
+                    result[p_text_split[0]] = p_text_split[1].strip()
         return result
 
     def get_sections_second(self, doc: Document) -> dict:
@@ -82,10 +82,10 @@ class Parser:
                 if curr_heading_text != "":
                     result[curr_heading_text] = "\n".join(curr_heading_paragraphs)
 
-                curr_heading_text = paragraph.text
+                curr_heading_text = paragraph.text.strip()
                 curr_heading_paragraphs.clear()
             else:
-                curr_heading_paragraphs.append(re.sub(configs.NUMBERING_PATTERN, "", paragraph.text))
+                curr_heading_paragraphs.append(re.sub(configs.NUMBERING_PATTERN, "", paragraph.text.strip()))
         result[curr_heading_text] = "\n".join(curr_heading_paragraphs)
         return result
 
@@ -102,7 +102,7 @@ class Parser:
                     max_ratio = ratio
                     text_parent = section
             if text_parent is not None:
-                text_parent.text = text
+                text_parent.text = text.strip()
 
     def iter_paragraphs(self, parent):
         if isinstance(parent, DocumentWithTable):
