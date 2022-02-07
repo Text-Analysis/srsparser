@@ -10,14 +10,27 @@ requirements = [
     'dnspython>=2.2.0'
 ]
 
+try:
+    f = open("README.md")
+    readme = f.read()
+    f.close()
+except OSError as ex:
+    print("failed to read readme: ignoring...")
+    readme = __doc__
+
 setup(
     name='srsparser',
-    version='1.2.3',
+    version='1.2.4',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
-    url='https://github.com/Text-Analysis/srsparser',
+    project_urls={
+        'Code': 'https://github.com/Text-Analysis/srsparser/',
+        'Issue Tracker': 'https://github.com/Text-Analysis/srsparser/issues',
+        'Download': 'https://pypi.org/project/srsparser/',
+    },
     python_requires='>=3.7',
-    description='A package for analyzing and uploading text documents to NoSQL database MongoDB.',
+    description=readme.split("\n")[0],
+    long_description="\n".join(readme.split("\n")[2:]).lstrip(),
     packages=find_packages(),
     install_requires=requirements,
     entry_points={
@@ -30,4 +43,5 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Topic :: Text Processing :: Linguistic',
     ],
+    keywords=['parser', 'text', 'documents', 'docx', 'GOST', "mongodb"]
 )

@@ -8,8 +8,9 @@ from srsparser import SRSParser
 
 def init_args_parser() -> ap.ArgumentParser:
     parser = ap.ArgumentParser(
-        description='A package for analyzing and uploading text documents '
-                    'with software requirements specifications to NoSQL database MongoDB'
+        description='A command-line application written in Python that parses unstructured text documents '
+                    '(files with .docx extension) with SRS in accordance with GOST standard 34.602-89 and '
+                    'saves the structured results to the MongoDB database.'
     )
 
     parser.add_argument(

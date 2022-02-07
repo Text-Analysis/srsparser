@@ -303,14 +303,16 @@ To structure the contents of a text document with the SRS:
 
 `srsparser <text document path> <MongoDB connection string> <MongoDB database name> <name of MongoDB collection with the unfilled templates> <the unfilled template name> <name of MongoDB collection with the results>`
 
+*NOTE: Before using, make sure that the necessary template is in the MongoDB collection with templates.*
+
 For example:
 
-`srsparser "testdata\tz_10.docx" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?retryWrites=true&w=majority" "documentsAnalysis" "templates" "default" "results"`
+`srsparser "./data/srs_1.docx" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "documentsAnalysis" "templates" "default" "results"`
 
-The command above means that a text document with path `testdata\tz_10.docx` will be analyzed according to the `default`
+The command above means that a text document with path `./data/srs_1.docx` will be analyzed according to the `default`
 template taken from the `templates` collection, and the results will be placed in the `results` collection of the
 database with connection string
-equals `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`.
+equals `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority`.
 
 *NOTE: srsparser processes only text documents with the .docx extension.*
 
@@ -321,7 +323,7 @@ from pymongo import MongoClient
 from srsparser import SRSParser
 
 DOCX_PATH = './data/srs_1.docx'
-MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
 DB_NAME = 'documentsAnalysis'
 TMPL_COLL_NAME = 'templates'
 TMPL_NAME = 'default'
@@ -331,13 +333,13 @@ client = MongoClient(MONGODB_URL)
 db = client[DB_NAME]
 
 tmpl_coll = db[TMPL_COLL_NAME]
-tree_template = tmpl_coll.find_one({'name': TMPL_NAME})['structure']
+template = tmpl_coll.find_one({'name': TMPL_NAME})['structure']
 
-parser = SRSParser(tree_template)
-document_structure = parser.parse_docx(DOCX_PATH)
+parser = SRSParser(template)
+docx_structure = parser.parse_docx(DOCX_PATH)
 
 results_coll = db[RESULTS_COLL_NAME]
-results_coll.insert_one({'document_name': DOCX_PATH, 'structure': document_structure})
+results_coll.insert_one({'document_name': DOCX_PATH, 'structure': docx_structure})
 
 client.close()
 ```
