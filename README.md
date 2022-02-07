@@ -264,9 +264,8 @@ on their recreation.
 
 1. Create [MongoDB](https://docs.mongodb.com/) database.
 
-2. Create the tree structure of sections in JSON format based on GOST standard 34.602-89 (
-   see [the main idea block](https://github.com/Text-Analysis/srsparser/tree/master#the-main-idea)) and save it into
-   separate MongoDB collection:
+2. Create the tree structure of sections in JSON format based on GOST standard 34.602-89 and save it into separate
+   MongoDB collection (see [the main idea block](https://github.com/Text-Analysis/srsparser/tree/master#the-main-idea)):
 
 ```
 {
