@@ -162,8 +162,7 @@ The compiled section structure is transferred to the parser as a *template*. Exa
 
 The parser reads the contents of a text document and tries to detect in it exactly those sections that are present in
 the template. If the text document contains content corresponding to a section of the template, then it is entered in
-the "
-text" field of the corresponding section of the template.
+the "text" field of the corresponding section of the template.
 
 After filling the template with the contents of a text document, sections with empty "text" fields are removed from it,
 and the filled template is converted to JSON format. Example of the filled template in JSON format:
@@ -266,13 +265,15 @@ on their recreation.
 1. Create [MongoDB](https://docs.mongodb.com/) database.
 
 2. Create the tree structure of sections in JSON format based on GOST standard 34.602-89 (
-   see [the main idea block](https://github.com/Text-Analysis/srsparser/tree/master#the-main-idea))
-   and save it into separate MongoDB collection:
+   see [the main idea block](https://github.com/Text-Analysis/srsparser/tree/master#the-main-idea)) and save it into
+   separate MongoDB collection:
 
-```json
+```
 {
-   "name": "default",
-   "structure": "{here is the unfilled template}"
+  "name": "default",
+  "structure": {
+  *here is the unfilled template*
+  }
 }
 ```
 
@@ -319,12 +320,12 @@ equals `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?re
 from pymongo import MongoClient
 from srsparser import SRSParser
 
-MONGODB_URL = "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
-DB_NAME = "documentsAnalysis"
-TMPL_COLL_NAME = "templates"
-TMPL_NAME = "default"
-RESULTS_COLL_NAME = "results"
-DOCX_PATH = "testdata/tz_10.docx"
+DOCX_PATH = './data/srs_1.docx'
+MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+DB_NAME = 'documentsAnalysis'
+TMPL_COLL_NAME = 'templates'
+TMPL_NAME = 'default'
+RESULTS_COLL_NAME = 'results'
 
 client = MongoClient(MONGODB_URL)
 db = client[DB_NAME]
