@@ -15,7 +15,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 
 setup(
     name='srsparser',
-    version='1.2.4',
+    version='1.2.5',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
     project_urls={
