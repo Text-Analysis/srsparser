@@ -7,7 +7,9 @@ requirements = [
     'pymorphy2>=0.9.1',
     'gensim>=4.1.2',
     'anytree>=2.8.0',
-    'dnspython>=2.2.0'
+    'dnspython>=2.2.0',
+    'pullenti>=4.1',
+    'prettytable>=3.0.0'
 ]
 
 with open('README.md', 'r', encoding='utf-8') as file:
@@ -15,7 +17,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 
 setup(
     name='srsparser',
-    version='1.2.5',
+    version='1.3.1',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
     project_urls={

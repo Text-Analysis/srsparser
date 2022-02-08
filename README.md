@@ -298,15 +298,22 @@ Alternatively, you can clone the project and run the following command to instal
 
 ## Usage
 
+The parser has 2 modes of use: **parse** and **keywords**
+
+### Parse mode
+
+In this mode, the parser reads the contents of text documents with the SRS, structures it based on the structure
+templates and stores it in the MongoDB database.
+
 To structure the contents of a text document with the SRS:
 
-`srsparser <text document path> <MongoDB connection string> <MongoDB database name> <name of MongoDB collection with the unfilled templates> <the unfilled template name> <name of MongoDB collection with the results>`
+`srsparser "parse" <MongoDB connection string (includes the name of the db)> <name of collection with the results> -tc <name of collection with the templates> -t <the template name> -dp <the text document path>`
 
 *NOTE: Before using, make sure that the necessary template is in the MongoDB collection with templates.*
 
 For example:
 
-`srsparser "./data/srs_1.docx" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "documentsAnalysis" "templates" "default" "results"`
+`srsparser "parse" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "results" -tc "templates" -t "default" -dp "./data/srs_1.docx"`
 
 The command above means that a text document with path `./data/srs_1.docx` will be analyzed according to the `default`
 template taken from the `templates` collection, and the results will be placed in the `results` collection of the
@@ -315,21 +322,68 @@ equals `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?
 
 *NOTE: srsparser processes only text documents with the .docx extension.*
 
+### Keywords mode
+
+In this mode, the parser uses some natural language processing methods (TF-IDF model
+from [gensim](https://github.com/RaRe-Technologies/gensim) library, KeywordAnalyzer
+from [pullenti](https://github.com/pullenti/PullentiPython) library, etc.) to get keywords of structured content from a
+collection with results. The output is this table:
+
+```
++---------------+--------------+
+|     TF-IDF    |   Pullenti   |
++---------------+--------------+
+|      узел     |   рабочий    |
+|     заказ     |   система    |
+|   справочник  |   заказчик   |
+|    продавец   | программный  |
+|   фотоуслуга  | пользователь |
+|  центральный  |  выполнение  |
+|     салон     |   операция   |
+|     выдать    |   продавец   |
+|    паролей    |  справочник  |
+| производиться | консультант  |
++---------------+--------------+
+```
+
+To get a table of keywords of the section structure content:
+
+`srsparser "keywords" <MongoDB connection string (includes the name of the db)> <name of collection with the results> -dn <document name from the resulting collection> -s <section name (if not explicitly specified, the contents of the root section ('Техническое задание') will be taken)>`
+
+For example:
+
+`srsparser "keywords" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "results" -dn "srs_1" -s "Общие требования"`
+
+The command above means that keywords will be obtained from the structure of sections with the name `srs_1` and from the
+section `"Общие сведения"` using NLP algorithms and displayed in the form of a table. The structure is taken from the
+resulting collection `results` of the database, which is available on the following connection
+string: `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority`.
+
+*NOTE: Before using, make sure that the necessary section structure is in the MongoDB collection with results.*
+
+To show help message:
+
+`srsparser --help`
+
 ## Usage as library
 
+### Parse
+
 ```python
+from os.path import basename, splitext
+
 from pymongo import MongoClient
+
 from srsparser import SRSParser
 
 DOCX_PATH = './data/srs_1.docx'
 MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
-DB_NAME = 'documentsAnalysis'
 TMPL_COLL_NAME = 'templates'
 TMPL_NAME = 'default'
 RESULTS_COLL_NAME = 'results'
 
 client = MongoClient(MONGODB_URL)
-db = client[DB_NAME]
+db = client.get_default_database()
 
 tmpl_coll = db[TMPL_COLL_NAME]
 template = tmpl_coll.find_one({'name': TMPL_NAME})['structure']
@@ -337,8 +391,85 @@ template = tmpl_coll.find_one({'name': TMPL_NAME})['structure']
 parser = SRSParser(template)
 docx_structure = parser.parse_docx(DOCX_PATH)
 
+document_name = splitext(basename(DOCX_PATH))[0]  # srs_1
+
 results_coll = db[RESULTS_COLL_NAME]
-results_coll.insert_one({'document_name': DOCX_PATH, 'structure': docx_structure})
+results_coll.insert_one({'document_name': document_name, 'structure': docx_structure})
 
 client.close()
+```
+
+### Keywords
+
+```python
+import sys
+
+from pymongo import MongoClient
+from prettytable import PrettyTable
+
+from srsparser import NLProcessor
+
+MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
+RESULTS_COLL_NAME = 'results'
+DOCX_NAME = 'srs_1'
+SECTION_NAME = 'Техническое задание'
+
+client = MongoClient(MONGODB_URL)
+db = client.get_default_database()
+results_coll = db[RESULTS_COLL_NAME]
+
+results = list(results_coll.find({}))
+
+docx_structure_idx = -1
+for idx in range(len(results)):
+   if results[idx]['document_name'] == DOCX_NAME:
+      docx_structure_idx = idx
+      break
+if docx_structure_idx < 0:
+   sys.exit(f'there is no such document in the results collection with document name "{DOCX_NAME}"')
+
+nlp = NLProcessor(init_pullenti=True)
+
+tf_idf_keywords = nlp.get_keywords_tf_idf(
+   structures=[result['structure'] for result in results],
+   structure_idx=docx_structure_idx,
+   section_name=SECTION_NAME
+)
+
+print(tf_idf_keywords)
+# Output:
+# ['бухгалтерский', 'подсистема', 'учёт', 'полнота', 'содержаться', 'рекомендоваться', 'элемент', 'восстановление',
+# 'экранный', 'сумма', ...]
+
+pullenti_keywords = nlp.get_keywords_pullenti(
+   structure=results[docx_structure_idx]['structure'],
+   section_name=SECTION_NAME
+)
+
+print(pullenti_keywords)
+# Output:
+# ['система', 'операция', 'работа', 'пользователь', 'учет', 'intel (интел)', 'дать', 'подсистема', 'функционирование',
+# 'элемент', ...]
+
+keywords_table = PrettyTable()
+keywords_table.add_column('TF-IDF', tf_idf_keywords)
+keywords_table.add_column('Pullenti', pullenti_keywords)
+
+print(keywords_table)
+# Output:
+# +-----------------+------------------+
+# |      TF-IDF     |     Pullenti     |
+# +-----------------+------------------+
+# |  бухгалтерский  |     система      |
+# |    подсистема   |     операция     |
+# |       учёт      |      работа      |
+# |     полнота     |   пользователь   |
+# |   содержаться   |       учет       |
+# | рекомендоваться |  intel (интел)   |
+# |     элемент     |       дать       |
+# |  восстановление |    подсистема    |
+# |     экранный    | функционирование |
+# |      сумма      |     элемент      |
+# |      ...        |       ...        |
+# +-----------------+------------------+
 ```

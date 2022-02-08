@@ -8,7 +8,7 @@ from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 
 from srsparser import configs
-from srsparser.nlp import strings_similarity
+from srsparser.nlp import NLProcessor
 from srsparser.sections_tree import SectionsTree
 
 
@@ -23,6 +23,7 @@ class SRSParser:
             which will be filled text content according to the relevant .docx file.
         """
         self.sections_tree = SectionsTree(sections_tree_template)
+        self.nlp = NLProcessor(init_pullenti=False)
 
     def parse_docx(self, docx_path: str) -> dict:
         """
@@ -99,7 +100,7 @@ class SRSParser:
             max_ratio = 0
             text_parent = None
             for section in self.sections_tree.get_leaf_sections():
-                ratio = strings_similarity(section.name, heading)
+                ratio = self.nlp.strings_similarity(section.name, heading)
                 if ratio >= max_ratio:
                     max_ratio = ratio
                     text_parent = section
@@ -131,7 +132,7 @@ class SRSParser:
         :return: True — yes, else — False.
         """
         for section in self.sections_tree.get_leaf_sections():
-            if strings_similarity(section.name, p_text) >= configs.MIN_SIMILARITY_RATIO:
+            if self.nlp.strings_similarity(section.name, p_text) >= configs.MIN_SIMILARITY_RATIO:
                 return True
         return False
 
