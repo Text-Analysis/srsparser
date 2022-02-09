@@ -30,7 +30,7 @@ LOGGING_CONFIG = {
     },
 
     'loggers': {
-        'my_logger': {
+        'default': {
             'handlers': ['stream_handler'],
             'level': 'INFO',
             'propagate': False

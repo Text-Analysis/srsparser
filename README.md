@@ -367,7 +367,7 @@ To show help message:
 
 ## Usage as library
 
-### Parse
+### Parse mode
 
 ```python
 from os.path import basename, splitext
@@ -399,7 +399,7 @@ results_coll.insert_one({'document_name': document_name, 'structure': docx_struc
 client.close()
 ```
 
-### Keywords
+### Keywords mode
 
 ```python
 import sys

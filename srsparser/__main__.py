@@ -125,7 +125,7 @@ def main():
         logger.info('the connection to the templates collection ("%s") is established', tmpl_coll.name)
 
         structure_template = tmpl_coll.find_one({'name': args.tmpl})['structure']
-        logger.info('a structure template ("%s") was obtained from the collection with the results', args.tmpl)
+        logger.info('a structure template ("%s") was obtained from the collection with the templates', args.tmpl)
 
         parser = SRSParser(structure_template)
         document_structure = parser.parse_docx(args.docx_path)
@@ -171,10 +171,15 @@ def main():
         logger.info('done')
 
         keywords_table = PrettyTable()
-        keywords_table.add_column('TF-IDF', tf_idf_keywords[:10])
-        keywords_table.add_column('Pullenti', pullenti_keywords[:10])
 
-        logger.info('below are the top 10 keywords of the "%s" section of the "%s" document:\n%s',
+        if len(pullenti_keywords) >= len(tf_idf_keywords):
+            keywords_table.add_column('TF-IDF', tf_idf_keywords)
+            keywords_table.add_column('Pullenti', pullenti_keywords[:len(tf_idf_keywords)])
+        else:
+            keywords_table.add_column('TF-IDF', tf_idf_keywords[:len(pullenti_keywords)])
+            keywords_table.add_column('Pullenti', pullenti_keywords)
+
+        logger.info('below are the keywords of the "%s" section of the "%s" document:\n%s',
                     args.section, args.docx_name, keywords_table)
     else:
         logger.error('the mode "%s" does not exist', mode)
