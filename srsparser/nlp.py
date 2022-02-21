@@ -170,8 +170,8 @@ class NLProcessor:
 
         return self.get_tf_idf_weights(documents, part_of_speech)
 
-    def get_keywords_tf_idf(self, structures: List[dict], structure_idx: int,
-                            section_name='Техническое задание', part_of_speech='') -> List[str]:
+    def get_structure_keywords_tf_idf(self, structures: List[dict], structure_idx: int,
+                                      section_name='Техническое задание', part_of_speech='') -> List[str]:
         """
         Returns keywords obtained from analyzing the contents of a structure with index `structure_idx`
         relative to all transmitted `structures` by constructing a TF-IDF model and obtaining TF-IDF weights.
@@ -186,7 +186,7 @@ class NLProcessor:
         tf_idf_weights = self.get_structures_tf_idf_weights(structures, section_name, part_of_speech)
         return [tf_idf_weight[0] for tf_idf_weight in tf_idf_weights[structure_idx]]
 
-    def get_keywords_pullenti(self, structure: dict, section_name='Техническое задание') -> List[str]:
+    def get_structure_keywords_pullenti(self, structure: dict, section_name='Техническое задание') -> List[str]:
         """
         Returns keywords obtained from analyzing the contents of a `structure`
         by using pullenti package (KeywordAnalyzer).
@@ -199,9 +199,19 @@ class NLProcessor:
         sections_structure = SectionsTree(structure)
         content = sections_structure.get_content(section_name)
 
+        return self.get_keywords_pullenti(content)
+
+    def get_keywords_pullenti(self, text: str) -> List[str]:
+        """
+        Returns keywords obtained from analyzing the contents of a `text`
+        by using pullenti package (KeywordAnalyzer).
+
+        :param text: processing text.
+        :return: keyword list.
+        """
         keywords: List[str] = []
         with ProcessorService.create_specific_processor(KeywordAnalyzer.ANALYZER_NAME) as proc:
-            ar = proc.process(SourceOfAnalysis(content), None, None)
+            ar = proc.process(SourceOfAnalysis(text), None, None)
             for e0_ in ar.entities:
                 if isinstance(e0_, KeywordReferent) and e0_.child_words == 1 and e0_.typ != KeywordType.ANNOTATION:
                     keywords.append(e0_.to_string(short_variant=True).lower())

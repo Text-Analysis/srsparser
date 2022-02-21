@@ -430,7 +430,7 @@ if docx_structure_idx < 0:
 
 nlp = NLProcessor(init_pullenti=True)
 
-tf_idf_keywords = nlp.get_keywords_tf_idf(
+tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
    structures=[result['structure'] for result in results],
    structure_idx=docx_structure_idx,
    section_name=SECTION_NAME
@@ -441,7 +441,7 @@ print(tf_idf_keywords)
 # ['бухгалтерский', 'подсистема', 'учёт', 'полнота', 'содержаться', 'рекомендоваться', 'элемент', 'восстановление',
 # 'экранный', 'сумма', ...]
 
-pullenti_keywords = nlp.get_keywords_pullenti(
+pullenti_keywords = nlp.get_structure_keywords_pullenti(
    structure=results[docx_structure_idx]['structure'],
    section_name=SECTION_NAME
 )

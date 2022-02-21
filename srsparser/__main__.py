@@ -156,7 +156,7 @@ def main():
         logger.info('parsing section of the document content is "%s"', args.section)
 
         logger.info('collecting keywords using TF-IDF model...')
-        tf_idf_keywords = nlp.get_keywords_tf_idf(
+        tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
             structures=[result['structure'] for result in results],
             structure_idx=docx_structure_idx,
             section_name=args.section
@@ -164,7 +164,7 @@ def main():
         logger.info('done')
 
         logger.info('collecting keywords using pullenti...')
-        pullenti_keywords = nlp.get_keywords_pullenti(
+        pullenti_keywords = nlp.get_structure_keywords_pullenti(
             structure=results[docx_structure_idx]['structure'],
             section_name=args.section
         )
