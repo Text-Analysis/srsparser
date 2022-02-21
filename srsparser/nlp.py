@@ -9,7 +9,6 @@ from pullenti.ner.ProcessorService import ProcessorService
 from pullenti.ner.SourceOfAnalysis import SourceOfAnalysis
 from pullenti.ner.keyword.KeywordAnalyzer import KeywordAnalyzer
 from pullenti.ner.keyword.KeywordReferent import KeywordReferent
-from pullenti.ner.keyword.KeywordType import KeywordType
 from pymorphy2 import MorphAnalyzer
 
 from srsparser import configs
@@ -213,6 +212,6 @@ class NLProcessor:
         with ProcessorService.create_specific_processor(KeywordAnalyzer.ANALYZER_NAME) as proc:
             ar = proc.process(SourceOfAnalysis(text), None, None)
             for e0_ in ar.entities:
-                if isinstance(e0_, KeywordReferent) and e0_.child_words == 1 and e0_.typ != KeywordType.ANNOTATION:
-                    keywords.append(e0_.to_string(short_variant=True).lower())
+                if isinstance(e0_, KeywordReferent):
+                    keywords.append(e0_.to_string(short_variant=True))
         return keywords
