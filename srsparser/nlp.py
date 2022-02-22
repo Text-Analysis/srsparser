@@ -1,5 +1,6 @@
 from typing import List
 
+import emoji
 from gensim.corpora.dictionary import Dictionary
 from gensim.models.tfidfmodel import TfidfModel
 from gensim.utils import simple_preprocess
@@ -9,6 +10,7 @@ from pullenti.ner.ProcessorService import ProcessorService
 from pullenti.ner.SourceOfAnalysis import SourceOfAnalysis
 from pullenti.ner.keyword.KeywordAnalyzer import KeywordAnalyzer
 from pullenti.ner.keyword.KeywordReferent import KeywordReferent
+from pullenti.ner.keyword.KeywordType import KeywordType
 from pymorphy2 import MorphAnalyzer
 
 from srsparser import configs
@@ -21,7 +23,7 @@ class NLProcessor:
     determining the similarity of strings, and others.
     """
 
-    def __init__(self, init_pullenti: bool):
+    def __init__(self, init_pullenti=True):
         """
         :param init_pullenti: is it necessary to initialize the pullenti SDK.
         """
@@ -208,10 +210,11 @@ class NLProcessor:
         :param text: processing text.
         :return: keyword list.
         """
+        text_without_emoji = emoji.get_emoji_regexp().sub(u'', text)
         keywords: List[str] = []
         with ProcessorService.create_specific_processor(KeywordAnalyzer.ANALYZER_NAME) as proc:
-            ar = proc.process(SourceOfAnalysis(text), None, None)
+            ar = proc.process(SourceOfAnalysis(text_without_emoji), None, None)
             for e0_ in ar.entities:
-                if isinstance(e0_, KeywordReferent):
+                if isinstance(e0_, KeywordReferent) and e0_.typ != KeywordType.ANNOTATION:
                     keywords.append(e0_.to_string(short_variant=True))
         return keywords

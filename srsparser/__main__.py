@@ -150,7 +150,7 @@ def main():
             return
 
         logger.info('initializing SDK pullenti...')
-        nlp = NLProcessor(init_pullenti=True)
+        nlp = NLProcessor()
         logger.info('done')
 
         logger.info('parsing section of the document content is "%s"', args.section)
