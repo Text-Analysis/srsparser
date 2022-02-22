@@ -42,6 +42,12 @@ class NLProcessor:
         """
         return list(filter(lambda token: token not in configs.STOPWORDS_RU, words))
 
+    def get_normal_form(self, word: str) -> str:
+        """
+        Return a word normal form.
+        """
+        return self.morph.normal_forms(word)[0]
+
     def lemmatize(self, words: List[str]) -> List[str]:
         """
         Converts word list to lemma list.
@@ -49,7 +55,7 @@ class NLProcessor:
         :param words: word list.
         :return: lemma list.
         """
-        return list(map(lambda token: self.morph.normal_forms(token)[0], words))
+        return list(map(lambda token: self.get_normal_form(token), words))
 
     def exclude_all_except(self, words: List[str], part_of_speech: str) -> List[str]:
         """
