@@ -165,7 +165,7 @@ class NLProcessor:
         :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
             document (dictionary with the keys: _id, document_name and structure).
         :param section_name: the name of the section of the SRS structure,
-            relative to which the content will be selected from each SRS mongo_documents.
+            relative to which the content will be selected from each SRS structure from mongo_documents.
         :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
         :return: TF-IDF weight list for the SRS structures.
         """
