@@ -37,3 +37,5 @@ LOGGING_CONFIG = {
         }
     }
 }
+
+ROOT_SRS_SECTION_NAME = 'Техническое задание'

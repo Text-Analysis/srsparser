@@ -330,20 +330,20 @@ from [pullenti](https://github.com/pullenti/PullentiPython) library, etc.) to ge
 collection with results. The output is this table:
 
 ```
-+---------------+--------------+
-|     TF-IDF    |   Pullenti   |
-+---------------+--------------+
-|      узел     |   рабочий    |
-|     заказ     |   система    |
-|   справочник  |   заказчик   |
-|    продавец   | программный  |
-|   фотоуслуга  | пользователь |
-|  центральный  |  выполнение  |
-|     салон     |   операция   |
-|     выдать    |   продавец   |
-|    паролей    |  справочник  |
-| производиться | консультант  |
-+---------------+--------------+
++-----------------+-------------------------------+
+|      TF-IDF     |            Pullenti           |
++-----------------+-------------------------------+
+|  бухгалтерский  |            СИСТЕМА            |
+|    подсистема   |            ОПЕРАЦИЯ           |
+|       учёт      |             РАБОТА            |
+|     полнота     |          ПОЛЬЗОВАТЕЛЬ         |
+|   содержаться   |              УЧЕТ             |
+| рекомендоваться |        ОПЕРАТИВНЫЙ УЧЕТ       |
+|     элемент     | ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА |
+|  восстановление |         Intel (Интел)         |
+|     экранный    |              ДАТЬ             |
+|      сумма      |           ПОДСИСТЕМА          |
++-----------------+-------------------------------+
 ```
 
 To get a table of keywords of the section structure content:
@@ -371,9 +371,7 @@ To show help message:
 
 ```python
 from os.path import basename, splitext
-
 from pymongo import MongoClient
-
 from srsparser import SRSParser
 
 DOCX_PATH = './data/srs_1.docx'
@@ -402,11 +400,8 @@ client.close()
 ### Keywords mode
 
 ```python
-import sys
-
 from pymongo import MongoClient
 from prettytable import PrettyTable
-
 from srsparser import NLProcessor
 
 MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
@@ -420,19 +415,11 @@ results_coll = db[RESULTS_COLL_NAME]
 
 results = list(results_coll.find({}))
 
-docx_structure_idx = -1
-for idx in range(len(results)):
-   if results[idx]['document_name'] == DOCX_NAME:
-      docx_structure_idx = idx
-      break
-if docx_structure_idx < 0:
-   sys.exit(f'there is no such document in the results collection with document name "{DOCX_NAME}"')
-
-nlp = NLProcessor(init_pullenti=True)
+nlp = NLProcessor()
 
 tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
-   structures=[result['structure'] for result in results],
-   structure_idx=docx_structure_idx,
+   mongo_documents=results,
+   structure_doc_name=DOCX_NAME,
    section_name=SECTION_NAME
 )
 
@@ -442,34 +429,36 @@ print(tf_idf_keywords)
 # 'экранный', 'сумма', ...]
 
 pullenti_keywords = nlp.get_structure_keywords_pullenti(
-   structure=results[docx_structure_idx]['structure'],
+   mongo_documents=results,
+   structure_doc_name=DOCX_NAME,
    section_name=SECTION_NAME
 )
 
 print(pullenti_keywords)
 # Output:
-# ['система', 'операция', 'работа', 'пользователь', 'учет', 'intel (интел)', 'дать', 'подсистема', 'функционирование',
-# 'элемент', ...]
+# ['СИСТЕМА', 'ОПЕРАЦИЯ', 'РАБОТА', 'ПОЛЬЗОВАТЕЛЬ', 'УЧЕТ', 'ОПЕРАТИВНЫЙ УЧЕТ', 'ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА',
+# 'Intel (Интел)', 'ДАТЬ', 'ПОДСИСТЕМА', 'ФУНКЦИОНИРОВАНИЕ', ...]
 
 keywords_table = PrettyTable()
-keywords_table.add_column('TF-IDF', tf_idf_keywords)
-keywords_table.add_column('Pullenti', pullenti_keywords)
+keywords_table.add_column('TF-IDF', tf_idf_keywords[:10])
+keywords_table.add_column('Pullenti', pullenti_keywords[:10])
 
 print(keywords_table)
 # Output:
-# +-----------------+------------------+
-# |      TF-IDF     |     Pullenti     |
-# +-----------------+------------------+
-# |  бухгалтерский  |     система      |
-# |    подсистема   |     операция     |
-# |       учёт      |      работа      |
-# |     полнота     |   пользователь   |
-# |   содержаться   |       учет       |
-# | рекомендоваться |  intel (интел)   |
-# |     элемент     |       дать       |
-# |  восстановление |    подсистема    |
-# |     экранный    | функционирование |
-# |      сумма      |     элемент      |
-# |      ...        |       ...        |
-# +-----------------+------------------+
+# +-----------------+-------------------------------+
+# |      TF-IDF     |            Pullenti           |
+# +-----------------+-------------------------------+
+# |  бухгалтерский  |            СИСТЕМА            |
+# |    подсистема   |            ОПЕРАЦИЯ           |
+# |       учёт      |             РАБОТА            |
+# |     полнота     |          ПОЛЬЗОВАТЕЛЬ         |
+# |   содержаться   |              УЧЕТ             |
+# | рекомендоваться |        ОПЕРАТИВНЫЙ УЧЕТ       |
+# |     элемент     | ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА |
+# |  восстановление |         Intel (Интел)         |
+# |     экранный    |              ДАТЬ             |
+# |      сумма      |           ПОДСИСТЕМА          |
+# +-----------------+-------------------------------
+
+client.close()
 ```

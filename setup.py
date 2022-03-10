@@ -9,7 +9,8 @@ requirements = [
     'anytree>=2.8.0',
     'dnspython>=2.2.0',
     'pullenti>=4.1',
-    'prettytable>=3.0.0'
+    'prettytable>=3.0.0',
+    'emoji>=1.6.3'
 ]
 
 with open('README.md', 'r', encoding='utf-8') as file:
@@ -17,7 +18,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 
 setup(
     name='srsparser',
-    version='1.3.11',
+    version='1.3.15',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
     project_urls={

@@ -33,12 +33,12 @@ class NLProcessor:
             Sdk.initialize_all()
 
     @staticmethod
-    def remove_stop_words(words: List[str]) -> List[str]:
+    def remove_ru_stop_words(words: List[str]) -> List[str]:
         """
-        Removes stopwords from word list.
+        Removes russian stopwords from word list.
 
         :param words: word list.
-        :return: word list without stopwords.
+        :return: word list without russian stopwords.
         """
         return list(filter(lambda token: token not in configs.STOPWORDS_RU, words))
 
@@ -79,7 +79,7 @@ class NLProcessor:
         :return: token list.
         """
         tokens = simple_preprocess(text, min_len=2, max_len=50, deacc=True)
-        tokens = self.remove_stop_words(tokens)
+        tokens = self.remove_ru_stop_words(tokens)
         tokens = self.lemmatize(tokens)
         if part_of_speech != '':
             tokens = self.exclude_all_except(tokens, part_of_speech)
@@ -155,55 +155,93 @@ class NLProcessor:
 
         return tf_idf_weights
 
-    def get_structures_tf_idf_weights(self, structures: List[dict],
-                                      section_name='Техническое задание',
+    def get_structures_tf_idf_weights(self, mongo_documents: List[dict],
+                                      section_name=configs.ROOT_SRS_SECTION_NAME,
                                       part_of_speech='') -> list:
         """
-        Builds TF-IDF model for the software requirements specifications (SRS) structures content
-        and returns TF-IDF weights.
+        Builds TF-IDF model for the SRS structures content and returns TF-IDF weights. Structures are contained in
+        MongoDB collection objects (`mongo_documents`) and are accessible by the key `structure`.
 
-        :param structures: the SRS structure list, which were filled relevant text documents content.
+        :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
+            document (dictionary with the keys: _id, document_name and structure).
         :param section_name: the name of the section of the SRS structure,
-            relative to which the content will be selected from each SRS structures.
+            relative to which the content will be selected from each SRS mongo_documents.
         :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
         :return: TF-IDF weight list for the SRS structures.
         """
-        documents: List[str] = []
-        for structure in structures:
-            doc_structure = SectionsTree(structure)
-            structure_content = doc_structure.get_content(section_name)
+        structures_contents: List[str] = []
 
-            documents.append(structure_content)
+        for document in mongo_documents:
+            structure = SectionsTree(document['structure'])
+            structure_content = structure.get_content(section_name)
+            structures_contents.append(structure_content)
 
-        return self.get_tf_idf_weights(documents, part_of_speech)
+        return self.get_tf_idf_weights(structures_contents, part_of_speech)
 
-    def get_structure_keywords_tf_idf(self, structures: List[dict], structure_idx: int,
-                                      section_name='Техническое задание', part_of_speech='') -> List[str]:
+    def get_structure_tf_idf_weights(self, mongo_documents: List[dict], structure_doc_name: str,
+                                     section_name=configs.ROOT_SRS_SECTION_NAME, part_of_speech='') -> list:
         """
-        Returns keywords obtained from analyzing the contents of a structure with index `structure_idx`
-        relative to all transmitted `structures` by constructing a TF-IDF model and obtaining TF-IDF weights.
+        Returns TF-IDF weights for the SRS structure that is contained among the objects of the MongoDB collection
+        (`mongo_documents`) and has the name `structure_doc_name` (the name of the document from which the structure
+        was derived).
 
-        :param structures: the SRS structure list, which were filled relevant text documents content.
-        :param structure_idx:
-        :param section_name: the name of the section of the SRS structure,
-            relative to which the content will be selected from each SRS structures.
+        :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
+            document (dictionary with the keys: _id, document_name and structure).
+        :param structure_doc_name: the name of the document from which the SRS structure was extracted.
+        :param section_name: the name of the section of the SRS structure, relative to which the content will be
+            selected from each SRS structure from mongo_documents.
+        :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
+        :return: TF-IDF weight list for the SRS structure corresponding to the MongoDB document with name
+            structure_doc_name.
+        """
+        structure_doc_idx = next(
+            (i for i, item in enumerate(mongo_documents) if item['document_name'] == structure_doc_name),
+            -1
+        )
+        if structure_doc_idx < 0:
+            raise ValueError(f'there are no objects named {structure_doc_name} in the MongoDB collection')
+
+        all_structures_weights = self.get_structures_tf_idf_weights(mongo_documents, section_name, part_of_speech)
+        return all_structures_weights[structure_doc_idx]
+
+    def get_structure_keywords_tf_idf(self, mongo_documents: List[dict], structure_doc_name: str,
+                                      section_name=configs.ROOT_SRS_SECTION_NAME, part_of_speech='') -> List[str]:
+        """
+        Returns keywords obtained from analyzing the contents of a structure with the name `structure_doc_name`
+        relative to all transmitted `mongo_documents` by constructing a TF-IDF model and obtaining TF-IDF weights.
+
+        :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
+            document (dictionary with the keys: _id, document_name and structure).
+        :param structure_doc_name: the name of the document from which the SRS structure was extracted.
+        :param section_name: the name of the section of the SRS structure, relative to which the content will be
+            selected from each SRS structure from mongo_documents.
         :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
         :return: keyword list.
         """
-        tf_idf_weights = self.get_structures_tf_idf_weights(structures, section_name, part_of_speech)
-        return [tf_idf_weight[0] for tf_idf_weight in tf_idf_weights[structure_idx]]
+        return [tf_idf_weight[0] for tf_idf_weight in
+                self.get_structure_tf_idf_weights(mongo_documents, structure_doc_name, section_name, part_of_speech)]
 
-    def get_structure_keywords_pullenti(self, structure: dict, section_name='Техническое задание') -> List[str]:
+    def get_structure_keywords_pullenti(self, mongo_documents: List[dict], structure_doc_name: str,
+                                        section_name=configs.ROOT_SRS_SECTION_NAME) -> List[str]:
         """
-        Returns keywords obtained from analyzing the contents of a `structure`
-        by using pullenti package (KeywordAnalyzer).
+        Returns keywords obtained from analyzing the contents of a `structure` by using pullenti package
+        (KeywordAnalyzer).
 
-        :param structure: the SRS structure, which was filled relevant text document content.
-        :param section_name: the name of the section of the SRS structure,
-            relative to which the content will be selected from SRS structure.
+        :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
+            document (dictionary with the keys: _id, document_name and structure).
+        :param structure_doc_name: the name of the document from which the SRS structure was extracted.
+        :param section_name: the name of the section of the SRS structure, relative to which the content will be
+            selected from each SRS structure from mongo_documents.
         :return: keyword list.
         """
-        sections_structure = SectionsTree(structure)
+        structure_doc_idx = next(
+            (i for i, item in enumerate(mongo_documents) if item['document_name'] == structure_doc_name),
+            -1
+        )
+        if structure_doc_idx < 0:
+            raise ValueError(f'there are no objects named {structure_doc_name} in the MongoDB collection')
+
+        sections_structure = SectionsTree(mongo_documents[structure_doc_idx]['structure'])
         content = sections_structure.get_content(section_name)
 
         return self.get_keywords_pullenti(content)
@@ -217,6 +255,7 @@ class NLProcessor:
         :return: keyword list.
         """
         text_without_emoji = emoji.get_emoji_regexp().sub(u'', text)
+
         keywords: List[str] = []
         with ProcessorService.create_specific_processor(KeywordAnalyzer.ANALYZER_NAME) as proc:
             ar = proc.process(SourceOfAnalysis(text_without_emoji), None, None)

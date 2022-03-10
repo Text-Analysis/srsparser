@@ -3,6 +3,8 @@ from anytree.exporter import DictExporter
 from anytree.importer import DictImporter
 from anytree.search import find_by_attr
 
+from srsparser import configs
+
 importer = DictImporter()
 exporter = DictExporter()
 
@@ -39,7 +41,7 @@ class SectionsTree:
                     node.parent = None
         return exporter.export(self.root)
 
-    def get_leaf_sections(self, section_name='Техническое задание') -> list:
+    def get_leaf_sections(self, section_name=configs.ROOT_SRS_SECTION_NAME) -> list:
         """
         Returns leaf element list of the :py:class:`Section` tree structure.
 
@@ -51,7 +53,7 @@ class SectionsTree:
             return [node for node in PreOrderIter(search_from_node, filter_=lambda n: hasattr(n, 'text'))]
         return []
 
-    def get_content(self, section_name='Техническое задание') -> str:
+    def get_content(self, section_name=configs.ROOT_SRS_SECTION_NAME) -> str:
         """
         Returns :py:class:`Section` tree structure text content.
 

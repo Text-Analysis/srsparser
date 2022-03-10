@@ -136,18 +136,7 @@ def main():
         results_coll.insert_one({'document_name': document_name, 'structure': document_structure})
         logger.info('the created section structure is loaded into the results collection')
     elif mode == 'keywords':
-        results = list(results_coll.find({}))
-
-        docx_structure_idx = -1
-        for idx in range(len(results)):
-            if results[idx]['document_name'] == args.docx_name:
-                docx_structure_idx = idx
-                logger.info('the document "%s" was found in the results collection under the sequence number %s',
-                            args.docx_name, docx_structure_idx + 1)
-                break
-        if docx_structure_idx < 0:
-            logger.error('there is no such document in the results collection with document name "%s"', args.docx_name)
-            return
+        mongo_documents = list(results_coll.find({}))
 
         logger.info('initializing SDK pullenti...')
         nlp = NLProcessor()
@@ -155,19 +144,28 @@ def main():
 
         logger.info('parsing section of the document content is "%s"', args.section)
 
-        logger.info('collecting keywords using TF-IDF model...')
-        tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
-            structures=[result['structure'] for result in results],
-            structure_idx=docx_structure_idx,
-            section_name=args.section
-        )
+        logger.info('collecting keywords using gensim TF-IDF model...')
+        try:
+            tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
+                mongo_documents=mongo_documents,
+                structure_doc_name=args.docx_name,
+                section_name=args.section
+            )
+        except ValueError:
+            logger.error('there is no such document in the results collection with document name "%s"', args.docx_name)
+            return
         logger.info('done')
 
         logger.info('collecting keywords using pullenti...')
-        pullenti_keywords = nlp.get_structure_keywords_pullenti(
-            structure=results[docx_structure_idx]['structure'],
-            section_name=args.section
-        )
+        try:
+            pullenti_keywords = nlp.get_structure_keywords_pullenti(
+                mongo_documents=mongo_documents,
+                structure_doc_name=args.docx_name,
+                section_name=args.section
+            )
+        except ValueError:
+            logger.error('there is no such document in the results collection with document name "%s"', args.docx_name)
+            return
         logger.info('done')
 
         keywords_table = PrettyTable()

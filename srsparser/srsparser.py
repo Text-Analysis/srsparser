@@ -14,7 +14,7 @@ from srsparser.sections_tree import SectionsTree
 
 class SRSParser:
     """
-    Parser analyzing .docx files with SRS and forming sections tree structures according to the SRS structure templates.
+    Parser analyzing .docx files with SRS and forming sections tree mongo_documents according to the SRS structure templates.
     """
 
     def __init__(self, sections_tree_template: dict):
