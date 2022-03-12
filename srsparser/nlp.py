@@ -15,6 +15,7 @@ from pymorphy2 import MorphAnalyzer
 
 from srsparser import configs
 from srsparser.sections_tree import SectionsTree
+from srsparser.database import get_mongo_obj_with_structure_idx
 
 
 class NLProcessor:
@@ -234,16 +235,9 @@ class NLProcessor:
             selected from each SRS structure from mongo_documents.
         :return: keyword list.
         """
-        structure_doc_idx = next(
-            (i for i, item in enumerate(mongo_documents) if item['document_name'] == structure_doc_name),
-            -1
-        )
-        if structure_doc_idx < 0:
-            raise ValueError(f'there are no objects named {structure_doc_name} in the MongoDB collection')
-
+        structure_doc_idx = get_mongo_obj_with_structure_idx(mongo_documents, structure_doc_name)
         sections_structure = SectionsTree(mongo_documents[structure_doc_idx]['structure'])
         content = sections_structure.get_content(section_name)
-
         return self.get_keywords_pullenti(content)
 
     def get_keywords_pullenti(self, text: str) -> List[str]:
@@ -263,3 +257,59 @@ class NLProcessor:
                 if isinstance(e0_, KeywordReferent) and e0_.typ != KeywordType.ANNOTATION:
                     keywords.append(e0_.to_string(short_variant=True))
         return keywords
+
+    def get_structure_keywords_with_ratios(self, mongo_documents: List[dict],
+                                           structure_doc_name: str,
+                                           section_name=configs.ROOT_SRS_SECTION_NAME,
+                                           part_of_speech='') -> list:
+        """
+        Returns a list of keywords extracted from the SRS structure and the TF-IDF weights corresponding to them.
+
+        :param mongo_documents: list of the MongoDB collection objects, each of which is represented by the parsed
+            document (dictionary with the keys: _id, document_name and structure).
+        :param structure_doc_name: the name of the document from which the SRS structure was extracted.
+        :param section_name: the name of the section of the SRS structure, relative to which the content will be
+            selected from each SRS structure from mongo_documents.
+        :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
+        :return: list of pairs "keyword-ratio".
+        """
+        structure_doc_idx = get_mongo_obj_with_structure_idx(mongo_documents, structure_doc_name)
+        sections_structure = SectionsTree(mongo_documents[structure_doc_idx]['structure'])
+        content = sections_structure.get_content(section_name)
+
+        structure_keywords = self.get_keywords_pullenti(content)
+
+        all_structures_weights = self.get_structures_tf_idf_weights(mongo_documents, section_name, part_of_speech)
+        structure_weights = all_structures_weights[structure_doc_idx]
+
+        keywords_with_ratios = []
+        for keyword in structure_keywords:
+            # проверка, элемент является словом или словосочетанием
+            keyphrase_words = keyword.split()
+            if len(keyphrase_words) > 1:  # словосочетание
+                tf_idf_sum = 0.0
+                # проход по словам ключевого словосочетания
+                for word in keyphrase_words:
+                    # лемматизируем слово (получаем его нормальную форму)
+                    normal_word = self.get_normal_form(word)
+                    for tf_idf_weight in structure_weights:
+                        # если для ключевого слова нашёлся его TF-IDF вес
+                        if normal_word == tf_idf_weight[0]:
+                            tf_idf_sum += tf_idf_weight[1]
+                            break
+                if tf_idf_sum > 0.0:
+                    keywords_with_ratios.append([keyword, tf_idf_sum])
+            else:  # слово
+                # лемматизируем слово (получаем его нормальную форму)
+                normal_word = self.get_normal_form(keyword)
+                # проход по TF-IDF весам слов всех комментариев
+                # (список, в котором каждый элемент представлен списком пар "слово-вес")
+                for tf_idf_weight in structure_weights:
+                    # если для ключевого слова нашёлся его TF-IDF вес
+                    if normal_word == tf_idf_weight[0]:
+                        keywords_with_ratios.append([keyword, tf_idf_weight[1]])
+                        break
+
+        keywords_with_ratios.sort(key=lambda item: item[1], reverse=True)
+
+        return keywords_with_ratios
