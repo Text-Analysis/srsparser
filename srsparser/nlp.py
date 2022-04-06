@@ -219,7 +219,7 @@ class NLProcessor:
         :param part_of_speech: part of speech acronym (see notation for grammem in pymorphy2 package).
         :return: keyword list.
         """
-        return [tf_idf_weight[0] for tf_idf_weight in
+        return [tf_idf_weight for tf_idf_weight in
                 self.get_structure_tf_idf_weights(mongo_documents, structure_doc_name, section_name, part_of_speech)]
 
     def get_structure_keywords_pullenti(self, mongo_documents: List[dict], structure_doc_name: str,
