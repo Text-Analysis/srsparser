@@ -1,3 +1,5 @@
+from typing import List
+
 from anytree import AnyNode, PreOrderIter, LevelOrderGroupIter
 from anytree.exporter import DictExporter
 from anytree.importer import DictImporter
@@ -52,6 +54,12 @@ class SectionsTree:
         if search_from_node:
             return [node for node in PreOrderIter(search_from_node, filter_=lambda n: hasattr(n, 'text'))]
         return []
+
+    def get_leaf_sections_names(self) -> List[str]:
+        """
+        Returns list of names of leaf sections of the :py:class:`Section` tree structure.
+        """
+        return [node.name for node in PreOrderIter(self.root, filter_=lambda n: hasattr(n, 'text'))]
 
     def get_content(self, section_name=configs.ROOT_SRS_SECTION_NAME) -> str:
         """
