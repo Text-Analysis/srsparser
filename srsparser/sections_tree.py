@@ -55,11 +55,11 @@ class SectionsTree:
             return [node for node in PreOrderIter(search_from_node, filter_=lambda n: hasattr(n, 'text'))]
         return []
 
-    def get_leaf_sections_names(self) -> List[str]:
+    def get_sections_names(self) -> List[str]:
         """
-        Returns list of names of leaf sections of the :py:class:`Section` tree structure.
+        Returns list of names of sections of the :py:class:`Section` tree structure.
         """
-        return [node.name for node in PreOrderIter(self.root, filter_=lambda n: hasattr(n, 'text'))]
+        return [node.name for node in PreOrderIter(self.root)]
 
     def get_content(self, section_name=configs.ROOT_SRS_SECTION_NAME) -> str:
         """
