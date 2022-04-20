@@ -1,4 +1,6 @@
 from typing import List
+from regex import regex as re
+import string
 
 import emoji
 from gensim.corpora.dictionary import Dictionary
@@ -12,6 +14,7 @@ from pullenti.ner.keyword.KeywordAnalyzer import KeywordAnalyzer
 from pullenti.ner.keyword.KeywordReferent import KeywordReferent
 from pullenti.ner.keyword.KeywordType import KeywordType
 from pymorphy2 import MorphAnalyzer
+from rusenttokenize import ru_sent_tokenize
 
 from srsparser import configs
 from srsparser.sections_tree import SectionsTree
@@ -30,8 +33,45 @@ class NLProcessor:
         """
         self.morph = MorphAnalyzer()
 
+        # regular expressions for text preprocessing
+        self.newlines_pattern = re.compile(r'\n')  # search for newlines
+        self.spaces_pattern = re.compile(r'\s{2,}')  # search for 2 or more spaces
+        self.semicolons_pattern = re.compile(r'(;|\.+)')  # search for semicolons and dots
+
+        # search for punctuation marks at the beginning and end of a line
+        self.punct_on_sides_pattern = re.compile(fr'(^[{string.punctuation}–]+|[{string.punctuation}–]+$)')
+
+        # search for punctuation marks that are not at the beginning and not at the end (between spaces)
+        self.punct_in_middle_pattern = re.compile(fr'\s+[{string.punctuation}–]+\s+')
+
+        # search for occurrences of a substring in which there is no space between the punctuation mark and
+        # the next character after it ("...1С:Предприятия...")
+        self.punct_solid_pattern = re.compile(fr'([.,:;–])([А-ЯЁа-яёA-Za-z])')
+
         if init_pullenti:
             Sdk.initialize_all()
+
+    def sentenize(self, text: str) -> List[str]:
+        """
+        Segmentation of text into sentences using rusenttokenize.
+
+        :return: sentence list.
+        """
+        text = self.newlines_pattern.sub('. ', text)
+        text = self.spaces_pattern.sub(' ', text)
+        text = self.semicolons_pattern.sub('.', text)
+
+        sentences: List[str] = []
+
+        for sentence in ru_sent_tokenize(text):
+            # if there are at least 3 words in the sentence
+            if len(re.findall(r'\w+', sentence)) >= 3:
+                sentence = self.punct_on_sides_pattern.sub('', sentence)
+                sentence = self.punct_in_middle_pattern.sub(' ', sentence)
+                sentence = self.punct_solid_pattern.sub(r'\1 \2', sentence)
+                sentences.append(sentence)
+
+        return sentences
 
     @staticmethod
     def remove_ru_stop_words(words: List[str]) -> List[str]:
