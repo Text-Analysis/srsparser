@@ -10,7 +10,8 @@ requirements = [
     'dnspython>=2.2.0',
     'pullenti>=4.1',
     'prettytable>=3.0.0',
-    'emoji>=1.6.3'
+    'emoji>=1.6.3',
+    'rusenttokenize>=0.0.5'
 ]
 
 with open('README.md', 'r', encoding='utf-8') as file:
@@ -18,7 +19,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 
 setup(
     name='srsparser',
-    version='1.4.3',
+    version='1.4.5',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
     project_urls={
