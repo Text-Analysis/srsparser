@@ -8,42 +8,39 @@ from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 
 from srsparser import configs
-from srsparser.nlp import NLProcessor
+from srsparser.language_processor import LanguageProcessor
 from srsparser.sections_tree import SectionsTree
 
 
-class SRSParser:
+class Parser:
     """
-    Parser analyzing .docx files with SRS and forming sections tree mongo_documents according to the SRS structure templates.
+    Parser analyzes semi-structured .docx documents and forming sections tree documents according to the templates.
     """
 
     def __init__(self, sections_tree_template: dict):
         """
-        :param sections_tree_template: SRS sections tree template containing certain sections tree structure,
+        :param sections_tree_template: sections tree structure containing certain sections tree structure,
             which will be filled text content according to the relevant .docx file.
         """
         self.sections_tree = SectionsTree(sections_tree_template)
-        self.nlp = NLProcessor(init_pullenti=False)
+        self.nlp = LanguageProcessor(init_pullenti=False)
 
-    def parse_docx(self, docx_path: str) -> dict:
+    def parse_docx(self, path: str) -> dict:
         """
-        Reads text document (file with .docx extension) and
-        returns sections tree structure filled according to the it's content.
-
-        :param docx_path: path to the text document containing SRS.
+        Reads .docx document and returns sections tree structure filled according to the it's content.
         """
-        document = Document(docx_path)
-        return self.get_docx_structure(document)
+        document = Document(path)
+        return self.get_sections_structure(document)
 
-    def get_docx_structure(self, doc: Document) -> dict:
+    def get_sections_structure(self, doc: Document) -> dict:
         """
         Returns sections tree structure filled according to the text document content.
         """
         sections = self.get_sections_first(doc)
-        self.fill_sections_tree(sections)
+        self.fill_tree(sections)
 
         sections = self.get_sections_second(doc)
-        self.fill_sections_tree(sections)
+        self.fill_tree(sections)
 
         return self.sections_tree.to_dict()
 
@@ -58,13 +55,14 @@ class SRSParser:
         result = {}
 
         for paragraph in self.iter_paragraphs(doc):
-            p_text_split = paragraph.text.split(':', 1)
-            if len(p_text_split) <= 1:
+            # section is array where the first el is heading and the second is content
+            section = paragraph.text.split(':', 1)
+            if len(section) <= 1:
                 continue
 
-            if self.is_heading_of_sec(p_text_split[0]) and not self.is_table_element(paragraph, doc):
-                if p_text_split[0] != '' and p_text_split[1] != '':
-                    result[p_text_split[0]] = p_text_split[1].strip()
+            if self.is_heading(section[0]) and not self.is_table_element(paragraph, doc):
+                if section[0] and section[1]:
+                    result[section[0]] = section[1].strip()
         return result
 
     def get_sections_second(self, doc: Document) -> dict:
@@ -79,24 +77,27 @@ class SRSParser:
 
         for paragraph in self.iter_paragraphs(doc):
             # tables contain their own headings, so we do not take them into account
-            if self.is_heading_of_sec(paragraph.text) and not self.is_table_element(paragraph, doc):
-                if curr_heading_text != '':
-                    result[curr_heading_text] = '\n'.join(curr_heading_paragraphs)
+            if self.is_heading(paragraph.text) and not self.is_table_element(paragraph, doc):
+                if curr_heading_text and curr_heading_paragraphs:
+                    result[curr_heading_text] = ' '.join(curr_heading_paragraphs)
 
-                curr_heading_text = paragraph.text.strip()
+                curr_heading_text = re.sub(configs.NUMBERING_PATTERN, '', paragraph.text).strip()
                 curr_heading_paragraphs.clear()
-            else:
-                curr_heading_paragraphs.append(re.sub(configs.NUMBERING_PATTERN, '', paragraph.text.strip()))
-        result[curr_heading_text] = '\n'.join(curr_heading_paragraphs)
+            elif len(paragraph.text) > 1:
+                curr_heading_paragraph = re.sub(configs.NUMBERING_PATTERN, '', paragraph.text).strip()
+                if self.nlp.punct_at_end_pattern.match(curr_heading_paragraph) is None:
+                    curr_heading_paragraph += '.'
+                curr_heading_paragraphs.append(curr_heading_paragraph)
+        result[curr_heading_text] = ' '.join(curr_heading_paragraphs)
         return result
 
-    def fill_sections_tree(self, headings_with_texts: dict):
+    def fill_tree(self, sections: dict):
         """
         Fills leaf sections tree structure expressed section nesting levels.
 
-        :param headings_with_texts: dictionary containing pairs like "section heading" — "section content".
+        :param sections: dictionary containing pairs like "section heading" — "section content".
         """
-        for heading, text in headings_with_texts.items():
+        for heading, text in sections.items():
             max_ratio = 0
             text_parent = None
             for section in self.sections_tree.get_leaf_sections():
@@ -125,7 +126,7 @@ class SRSParser:
                         for child_paragraph in self.iter_paragraphs(cell):
                             yield child_paragraph
 
-    def is_heading_of_sec(self, p_text: str) -> bool:
+    def is_heading(self, p_text: str) -> bool:
         """
         Checks whether the paragraph is the heading of the section tree structure.
 

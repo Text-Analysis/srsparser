@@ -1,4 +1,4 @@
 from .configs import *
-from .nlp import *
+from .language_processor import *
 from .sections_tree import *
-from .srsparser import *
+from .parser import *
