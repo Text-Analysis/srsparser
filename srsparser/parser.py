@@ -32,6 +32,21 @@ class Parser:
         document = Document(path)
         return self.get_sections_structure(document)
 
+    @staticmethod
+    def save_as_docx(sections_structure: dict, name: str):
+        """
+        Converts the `sections_structure` into a Word document (.docx file) named `name`.
+        """
+        tree = SectionsTree(sections_structure)
+        sections = tree.get_all_sections()
+
+        document = Document()
+        for section in sections:
+            document.add_heading(section.name, level=section.depth)
+            if hasattr(section, 'text'):
+                document.add_paragraph(section.text)
+        document.save(f'{name}.docx')
+
     def get_sections_structure(self, doc: Document) -> dict:
         """
         Returns sections tree structure filled according to the text document content.

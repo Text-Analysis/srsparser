@@ -358,7 +358,7 @@ parsed_documents = []
 for docx_path in ["/path/to/doc1.docx", "/path/to/doc2.docx", "/path/to/doc2.docx"]:
     structure = parser.parse_docx(docx_path)
     parsed_documents.append({
-        "document_name": docx_path,
+        "name": docx_path,
         "structure": structure
     })
 
@@ -370,7 +370,7 @@ langproc = LanguageProcessor()
 # ======================================================================================================================
 # 1. extract keywords from a specific section of the selected structure
 keywords = langproc.get_structure_keywords_pullenti(documents=parsed_documents,
-                                                    document_name=parsed_documents[1]["document_name"],
+                                                    document_name=parsed_documents[1]["name"],
                                                     section_name="Общие сведения")  # default: root section
 print(keywords)
 # Output:
@@ -393,7 +393,7 @@ print(keywords)
 # ======================================================================================================================
 # 1. extract pairs of words and their corresponding TF-IDF weights from a specific section of the selected structure
 pairs = langproc.get_structure_tf_idf_pairs(documents=parsed_documents,
-                                            document_name=parsed_documents[0]["document_name"],
+                                            document_name=parsed_documents[0]["name"],
                                             section_name="Требования к функциям (задачам)",  # default: root section
                                             part_of_speech="NOUN",  # default: all parts of speech
                                             smartirs="ntc")  # default: ntc (see: SMART Information Retrieval System)
@@ -423,7 +423,7 @@ print(pairs)
 
 # 3. extract pairs of keywords and their corresponding TF-IDF weights
 pairs = langproc.get_structure_rationized_keywords(documents=parsed_documents,
-                                                   document_name=parsed_documents[2]["document_name"],
+                                                   document_name=parsed_documents[2]["name"],
                                                    section_name="Требования к системе",  # default: root section
                                                    smartirs="dnu")  # default: ntc
 print(pairs)
