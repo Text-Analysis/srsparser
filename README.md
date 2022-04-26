@@ -1,15 +1,19 @@
-<h1 align="center">Software requirements specifications (SRS) parser</h1>
+<h1>Semi-structured document parser</h1>
 
-srsparser is a command-line application written in Python that parses unstructured text documents (files with .docx
-extension) with SRS in accordance
-with [GOST standard 34.602-89](http://protect.gost.ru/default.aspx/document1.aspx?control=31&baseC=6&page=0&month=4&year=-1&search=&id=241754)
-and saves the structured results to the MongoDB database.
+srsparser is a library that translates semi-structured text documents (files with .docx extension) into a structured
+form in accordance with JSON templates and contains natural language processing algorithms to analyze the resulting
+structures.
 
 ## The main idea
 
-Based on the structure described in the GOST standard, the necessary sections are selected, and on their basis the tree
-structure of sections is compiled in JSON format. Each section is represented by name and content (children — if it has
-subsections, otherwise — text).
+Let's consider the application of this library on the example of the technical assignment for developing of automated
+system.
+
+Based on the structure of the technical assignment described in
+the [GOST standard 34.602-89](http://protect.gost.ru/default.aspx/document1.aspx?control=31&baseC=6&page=0&month=4&year=-1&search=&id=241754)
+the necessary sections are selected, and on their basis the tree structure of sections is compiled in JSON format. Each
+section is represented by name and content (children — if it has subsections, otherwise — text). This step is done
+manually.
 
 The compiled section structure is transferred to the parser as a *template*. Example of the template:
 
@@ -172,15 +176,15 @@ and the filled template is converted to JSON format. Example of the filled templ
   "name": "Техническое задание",
   "children": [
     {
-      "text": "Полное наименование системы: Станция технического обслуживания автомобилей. Условное обозначение – СТО автомобилей.\nШифр темы или шифр (номер) договора: данный программный продукт разрабатывался в рамках выполнения должностных обязанностей в компании-заказчике...",
+      "text": "Полное наименование системы и ее условное обозначение: Конфигурация «Бухгалтерия предприятия» в среде «1С: Предприятие 8.1»....",
       "name": "Общие сведения"
     },
     {
-      "text": "Автоматизация работы станции технического обслуживания;\nпредоставление удобных механизмов для работы мастеров-приемщиков и оформителей на станции;\nВозможность получения точной информации о работе станции, расчет прибыли (убытков) от работы станции...",
+      "text": "Подсистема оперативного учета должна содержать механизмы...",
       "name": "Назначение и цели создания (развития) системы"
     },
     {
-      "text": "Возможность модификации конфигурации предусмотрена самой платформой.\nСроки и порядок комплектования и обучения персонала...",
+      "text": "Объектом автоматизации является процесс учета расчетов с работниками по оплате труда в организации...",
       "name": "Характеристика объектов автоматизации"
     },
     {
@@ -190,93 +194,90 @@ and the filled template is converted to JSON format. Example of the filled templ
           "name": "Требования к системе в целом",
           "children": [
             {
-              "text": "Перечень подсистем:\nОформление документов\nРабота с клиентами\nОтчетность\nПодсистема оформления документов должна представлять собой совокупность документов, оформляемых в процессе работы по каждой заявке...",
-              "name": "Требования к структуре и функционированию системы"
-            },
-            {
-              "text": "Пользователями разрабатываемой системы должны выступать:\nОформители\nМастер-приемщик\nМенеджер по работе с персоналом\nНачальник СТО...",
+              "text": "Для наиболее эффективного функционирования системы помимо пользователя...",
               "name": "Требования к численности и квалификации персонала системы и режиму его работы"
             },
             {
-              "text": "Данная система должна быть гибкой в отношении изменения отчетов  и легко модернизироваться под изменяющиеся нужды станции технического обслуживания...",
+              "text": "Система должна предусматривать возможность масштабирования по производительности...",
               "name": "Показатели назначения"
+            },
+            {
+              "text": "Система должна сохранять работоспособность и обеспечивать восстановление своих функций при возникновении следующих внештатных ситуаций...",
+              "name": "Требования к защите от влияния внешних воздействий"
             }
           ]
         },
         {
-          "text": "Перечень подлежащих автоматизации задач:\nФиксирование заявок на ремонт, поступающих от клиентов.\nУчет данных о клиентах...",
+          "text": "Подсистема оперативного учета должна осуществлять ввод и хранение оперативных данных системы...",
           "name": "Требования к функциям (задачам)"
         },
         {
           "name": "Требования к видам обеспечения",
           "children": [
             {
-              "text": "Реквизиты документов должны соответствовать требованиям, установленным Стандартом предприятия...",
+              "text": "Не предъявляются;",
+              "name": "Требования к математическому обеспечению"
+            },
+            {
+              "text": "Уровень хранения данных в системе должен быть построен на основе современных СУБД...",
               "name": "Требования к информационному обеспечению"
             },
             {
-              "text": "Должен использоваться язык программирования «1С v8.1»...",
+              "text": "Система создана на основе языка программирования «1С 8.1»;",
               "name": "Требования к лингвистическому обеспечению"
             },
             {
-              "text": "Нет требований к данному виду обеспечения...",
+              "text": "Для эффективного функционирования системы помимо пользователя необходим специалист по технической поддержке...",
               "name": "Требования к метрологическому обеспечению"
             },
             {
-              "text": "Для функционирования системы необходимо минимум 2 человека: мастер-приемщик, осуществляющий ввод первичных данных в документы...",
+              "text": "Для эффективного функционирования системы помимо пользователя необходим специалист по технической поддержке...",
               "name": "Требования к организационному обеспечению"
+            },
+            {
+              "text": "Для обеспечения целостности данных должны использоваться встроенные механизмы СУБД...",
+              "name": "Требования к методическому обеспечению"
             }
           ]
         }
       ]
     },
     {
-      "text": "Работы по созданию системы должны проводиться инженером-программистом...",
+      "text": "Перечень стадий и этапов работ, а так же сроки их исполнения представлены в Таблице 2...",
       "name": "Состав и содержание работ по созданию системы"
     },
     {
-      "text": "Проверку каждой команды меню, панели инструментов и каждой операции, которую выполняет система...",
+      "text": "Приемочные испытания должны включать проверку: полноты и качества реализации необходимых функций...",
       "name": "Порядок контроля и приемки системы"
     },
     {
-      "text": "Особых требований не предъявляется, поскольку все подготовки к вводу системы в действие были реализованы на этапе внедрения...",
+      "text": "Для подготовки объекта автоматизации к вводу системы в действие необходимо при помощи специалиста технической поддержки...",
       "name": "Требования к составу и содержанию работ по подготовке объекта автоматизации к вводу системы в действие"
     },
     {
-      "text": "В состав программной документации должны входить следующие документы:\n- техническое задание...",
+      "text": "Разработке подлежит следующая документация: Инструкция пользователю; Инструкция программисту.",
       "name": "Требования к документированию"
-    },
-    {
-      "text": "Источниками разработки являются документы «Стандарт предприятия» для автосалонов...",
-      "name": "Источники разработки"
     }
   ]
 }
 ```
 
-The last step is to save the filled template in JSON format in the MongoDB database in order to access the necessary
-sections of the SRS without spending time searching for relevant information.
-
-For convenience, the unfilled templates in JSON format are also saved into the MongoDB database, so as not to waste time
-on their recreation.
+The last step is to save the filled template in JSON format in order to access the necessary sections of the technical
+assignment without spending time searching for relevant information.
 
 ## Preparing
 
-1. Create [MongoDB](https://docs.mongodb.com/) database.
-
-2. Create the tree structure of sections in JSON format based on GOST standard 34.602-89 and save it into separate
-   MongoDB collection (see [the main idea block](https://github.com/Text-Analysis/srsparser/tree/master#the-main-idea)):
+Create the tree structure of sections in JSON format. The created JSON will act as a template. The required element is
+the root element, so make sure that the entire structure is contained inside the children field of the root element.
 
 ```
 {
-  "name": "default",
-  "structure": {
-  *here is the unfilled template*
-  }
+  "root element name": "root",
+  "children": [
+    *here is the sections*
+  ]
 }
 ```
-
-One collection is for the unfilled templates, and another is for the results.
 
 ## Installation
 
@@ -288,177 +289,190 @@ To update srsparser:
 
 `pip install srsparser --upgrade`
 
-Alternatively, you can clone the project and run the following command to install:
-
-`git clone https://github.com/Text-Analysis/srsparser.git`
-
-`python setup.py install`
-
-*NOTE: Make sure you cd into the srsparser folder before performing the command above.*
-
 ## Usage
 
-The parser has 2 modes of use: **parse** and **keywords**
-
-### Parse mode
-
-In this mode, the parser reads the contents of text documents with the SRS, structures it based on the structure
-templates and stores it in the MongoDB database.
-
-To structure the contents of a text document with the SRS:
-
-`srsparser "parse" <MongoDB connection string (includes the name of the db)> <name of collection with the results> -tc <name of collection with the templates> -t <the template name> -dp <the text document path>`
-
-*NOTE: Before using, make sure that the necessary template is in the MongoDB collection with templates.*
-
-For example:
-
-`srsparser "parse" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "results" -tc "templates" -t "default" -dp "./data/srs_1.docx"`
-
-The command above means that a text document with path `./data/srs_1.docx` will be analyzed according to the `default`
-template taken from the `templates` collection, and the results will be placed in the `results` collection of the
-database with connection string
-equals `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority`.
-
-*NOTE: srsparser processes only text documents with the .docx extension.*
-
-### Keywords mode
-
-In this mode, the parser uses some natural language processing methods (TF-IDF model
-from [gensim](https://github.com/RaRe-Technologies/gensim) library, KeywordAnalyzer
-from [pullenti](https://github.com/pullenti/PullentiPython) library, etc.) to get keywords of structured content from a
-collection with results. The output is this table:
-
-```
-+-----------------+-------------------------------+
-|      TF-IDF     |            Pullenti           |
-+-----------------+-------------------------------+
-|  бухгалтерский  |            СИСТЕМА            |
-|    подсистема   |            ОПЕРАЦИЯ           |
-|       учёт      |             РАБОТА            |
-|     полнота     |          ПОЛЬЗОВАТЕЛЬ         |
-|   содержаться   |              УЧЕТ             |
-| рекомендоваться |        ОПЕРАТИВНЫЙ УЧЕТ       |
-|     элемент     | ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА |
-|  восстановление |         Intel (Интел)         |
-|     экранный    |              ДАТЬ             |
-|      сумма      |           ПОДСИСТЕМА          |
-+-----------------+-------------------------------+
-```
-
-To get a table of keywords of the section structure content:
-
-`srsparser "keywords" <MongoDB connection string (includes the name of the db)> <name of collection with the results> -dn <document name from the resulting collection> -s <section name (if not explicitly specified, the contents of the root section ('Техническое задание') will be taken)>`
-
-For example:
-
-`srsparser "keywords" "mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority" "results" -dn "srs_1" -s "Общие требования"`
-
-The command above means that keywords will be obtained from the structure of sections with the name `srs_1` and from the
-section `"Общие сведения"` using NLP algorithms and displayed in the form of a table. The structure is taken from the
-resulting collection `results` of the database, which is available on the following connection
-string: `mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority`.
-
-*NOTE: Before using, make sure that the necessary section structure is in the MongoDB collection with results.*
-
-To show help message:
-
-`srsparser --help`
-
-## Usage as library
-
-### Parse mode
+### Parser
 
 ```python
-from os.path import basename, splitext
-from pymongo import MongoClient
-from srsparser import SRSParser
+import json
 
-DOCX_PATH = './data/srs_1.docx'
-MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
-TMPL_COLL_NAME = 'templates'
-TMPL_NAME = 'default'
-RESULTS_COLL_NAME = 'results'
+from srsparser import Parser
 
-client = MongoClient(MONGODB_URL)
-db = client.get_default_database()
+TEMPLATE_PATH = "/path/to/template.json"
 
-tmpl_coll = db[TMPL_COLL_NAME]
-template = tmpl_coll.find_one({'name': TMPL_NAME})['structure']
+# read the template (a JSON file created at the preparation stage)
+with open(TEMPLATE_PATH, encoding="UTF-8") as f:
+    template = json.load(f)
 
-parser = SRSParser(template)
-docx_structure = parser.parse_docx(DOCX_PATH)
+DOCX_PATH = "/path/to/doc1.docx"
 
-document_name = splitext(basename(DOCX_PATH))[0]  # srs_1
+parser = Parser(template)
+structure = parser.parse_docx(DOCX_PATH)
 
-results_coll = db[RESULTS_COLL_NAME]
-results_coll.insert_one({'document_name': document_name, 'structure': docx_structure})
-
-client.close()
+print(structure)
+# Output:
+# {
+#   'name': 'Техническое задание',
+#   'children': [
+#     {
+#       'text': 'Полное наименование системы и ее условное обозначение...',
+#       'name': 'Общие сведения'
+#     },
+#     {
+#       'name': 'Требования к системе',
+#       'children': [
+#         {
+#           'name': 'Требования к системе в целом',
+#           'children': [
+#             {
+#               'text': 'Для наиболее эффективного функционирования системы помимо пользователя...',
+#               'name': 'Требования к численности и квалификации персонала системы и режиму его работы'
+#             },
+#             ...
+#           ]
+#         },
+#         ...
+#       ]
+#     },
+#     ...
+#   ]
+# }
 ```
 
-### Keywords mode
+### LanguageProcessor
 
 ```python
-from pymongo import MongoClient
-from prettytable import PrettyTable
-from srsparser import NLProcessor
+import json
 
-MONGODB_URL = 'mongodb+srv://tmrrwnxtsn:qwerty@srs.atqge.mongodb.net/documentsAnalysis?retryWrites=true&w=majority'
-RESULTS_COLL_NAME = 'results'
-DOCX_NAME = 'srs_1'
-SECTION_NAME = 'Техническое задание'
+from srsparser import Parser, LanguageProcessor, SectionsTree
 
-client = MongoClient(MONGODB_URL)
-db = client.get_default_database()
-results_coll = db[RESULTS_COLL_NAME]
+TEMPLATE_PATH = "/path/to/template.json"  # see the main idea section (README.md) for example
 
-results = list(results_coll.find({}))
+# read the template (a JSON file created at the preparation stage)
+with open(TEMPLATE_PATH, encoding="UTF-8") as f:
+    template = json.load(f)
 
-nlp = NLProcessor()
+parser = Parser(template)
 
-tf_idf_keywords = nlp.get_structure_keywords_tf_idf(
-   mongo_documents=results,
-   structure_doc_name=DOCX_NAME,
-   section_name=SECTION_NAME
-)
+parsed_documents = []
+for docx_path in ["/path/to/doc1.docx", "/path/to/doc2.docx", "/path/to/doc2.docx"]:
+    structure = parser.parse_docx(docx_path)
+    parsed_documents.append({
+        "document_name": docx_path,
+        "structure": structure
+    })
 
-print(tf_idf_keywords)
+# a class that contains NLP methods.
+# when reused, you may not initialize pullenti: LanguageProcessor(init_pullenti=False)
+langproc = LanguageProcessor()
+
+# KEYWORD EXTRACTION (using the pullenti library)
+# ======================================================================================================================
+# 1. extract keywords from a specific section of the selected structure
+keywords = langproc.get_structure_keywords_pullenti(documents=parsed_documents,
+                                                    document_name=parsed_documents[1]["document_name"],
+                                                    section_name="Общие сведения")  # default: root section
+print(keywords)
 # Output:
-# ['бухгалтерский', 'подсистема', 'учёт', 'полнота', 'содержаться', 'рекомендоваться', 'элемент', 'восстановление',
-# 'экранный', 'сумма', ...]
+# ['РАБОЧИЙ', 'ПОЛНОЕ НАИМЕНОВАНИЕ СИСТЕМЫ', 'АВТОМАТИЗИРОВАННОЕ РАБОЧЕЕ МЕСТО', 'ОКОНЧАНИЕ РАБОТ', 'СИСТЕМА',
+# 'ПЛАНОВЫЙ СРОК НАЧАЛА', 'Ульяновск', 'ЗАКАЗЧИК', 'ПОЛНОЕ НАИМЕНОВАНИЕ', 'ПРОДАВЕЦ-КОНСУЛЬТАНТ',
+# 'НАИМЕНОВАНИЕ', 'ШИФР ТЕМЫ', 'ПРЕДПРИЯТИЕ', 'НАИМЕНОВАНИЕ ПРЕДПРИЯТИЯ', 'ЗАКАЗЧИК СИСТЕМЫ', 'ПЛАНОВЫЙ СРОК', ...]
 
-pullenti_keywords = nlp.get_structure_keywords_pullenti(
-   mongo_documents=results,
-   structure_doc_name=DOCX_NAME,
-   section_name=SECTION_NAME
-)
-
-print(pullenti_keywords)
+# 2. extract keywords from the text (to read the contents of the structure, the SectionsTree data structure is used)
+tree = SectionsTree(parsed_documents[1]["structure"])
+structure_contents = tree.get_content(section_name="Характеристика объектов автоматизации")  # default: root section
+keywords = langproc.get_keywords_pullenti(structure_contents)
+print(keywords)
 # Output:
-# ['СИСТЕМА', 'ОПЕРАЦИЯ', 'РАБОТА', 'ПОЛЬЗОВАТЕЛЬ', 'УЧЕТ', 'ОПЕРАТИВНЫЙ УЧЕТ', 'ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА',
-# 'Intel (Интел)', 'ДАТЬ', 'ПОДСИСТЕМА', 'ФУНКЦИОНИРОВАНИЕ', ...]
+# ['ТОРГОВЫЙ ЗАЛ САЛОНА', 'СИСТЕМА', 'ОБЪЕКТ АВТОМАТИЗАЦИИ', 'ТОРГОВЫЙ ЗАЛ', 'ПРОДАЖА ФОТОТОВАРОВ', 'РЕАЛИЗАЦИЯ УСЛУГ',
+# 'ТРЕБОВАНИЕ', 'ФУНКЦИОНИРОВАНИЕ СИСТЕМЫ', 'ПРОГРАММНЫЙ ПРОДУКТ', 'ЕДИНАЯ СИСТЕМА', 'МОНОПОЛЬНЫЙ РЕЖИМ', 'ОБЪЕКТ',
+# 'АВТОМАТИЗАЦИЯ', 'ТОРГОВЫЙ', 'ЗАЛ', 'САЛОН', 'ФОТОУСЛУГА', 'ОСУЩЕСТВЛЯТЬ', 'ПРОДАЖА', 'ФОТОТОВАРЫ', ...]
+# ======================================================================================================================
 
-keywords_table = PrettyTable()
-keywords_table.add_column('TF-IDF', tf_idf_keywords[:10])
-keywords_table.add_column('Pullenti', pullenti_keywords[:10])
-
-print(keywords_table)
+# TF-IDF PAIRS EXTRACTION (using the gensim library)
+# ======================================================================================================================
+# 1. extract pairs of words and their corresponding TF-IDF weights from a specific section of the selected structure
+pairs = langproc.get_structure_tf_idf_pairs(documents=parsed_documents,
+                                            document_name=parsed_documents[0]["document_name"],
+                                            section_name="Требования к функциям (задачам)",  # default: root section
+                                            part_of_speech="NOUN",  # default: all parts of speech
+                                            smartirs="ntc")  # default: ntc (see: SMART Information Retrieval System)
+print(pairs)
 # Output:
-# +-----------------+-------------------------------+
-# |      TF-IDF     |            Pullenti           |
-# +-----------------+-------------------------------+
-# |  бухгалтерский  |            СИСТЕМА            |
-# |    подсистема   |            ОПЕРАЦИЯ           |
-# |       учёт      |             РАБОТА            |
-# |     полнота     |          ПОЛЬЗОВАТЕЛЬ         |
-# |   содержаться   |              УЧЕТ             |
-# | рекомендоваться |        ОПЕРАТИВНЫЙ УЧЕТ       |
-# |     элемент     | ПОДСИСТЕМА ОПЕРАТИВНОГО УЧЕТА |
-# |  восстановление |         Intel (Интел)         |
-# |     экранный    |              ДАТЬ             |
-# |      сумма      |           ПОДСИСТЕМА          |
-# +-----------------+-------------------------------
+# [['документ', 0.313], ['диск', 0.242], ['жесткия', 0.242], ['просмотр', 0.242], ['список', 0.242],
+# ['удаление', 0.242], ['установка', 0.242], ['учёт', 0.205], ['мбаит', 0.179], ['основа', 0.16], ['процессор', 0.134],
+# ['сервер', 0.134], ['субд', 0.134], ['бухгалтер', 0.121], ['версия', 0.121], ['главное', 0.121], ...]
 
-client.close()
+# 2. extract pairs of words and their corresponding TF-IDF weights of all documents
+documents = [
+    "Подсистема оперативного учета должна содержать механизмы, позволяющие вводить в систему и хранить в ней "
+    "информацию о текущей деятельности организации.",
+    "Объектом автоматизации является процесс учета расчетов с работниками по оплате труда в организации, имеющей "
+    "специфические принципы формирования расчетных сумм, в части расчета этих сумм и сбора данных из документов "
+    "оперативного учета для проведения расчета.",
+    "Система должна сохранять работоспособность и обеспечивать восстановление своих функций при возникновении "
+    "внештатных ситуаций."
+]
+pairs = langproc.get_tf_idf_pairs(documents=documents,
+                                  part_of_speech="ADJF",  # default: all parts of speech
+                                  smartirs="lfc")  # default: ntc (see: SMART Information Retrieval System)
+print(pairs)
+# Output:
+# [[['текущей', 0.887], ['должный', 0.327], ['оперативный', 0.327]], [['расчётный', 0.565], ['специфический', 0.565], 
+# ['этот', 0.565], ['оперативный', 0.208]], [['внештатный', 0.684], ['свой', 0.684], ['должный', 0.253]]]
+
+# 3. extract pairs of keywords and their corresponding TF-IDF weights
+pairs = langproc.get_structure_rationized_keywords(documents=parsed_documents,
+                                                   document_name=parsed_documents[2]["document_name"],
+                                                   section_name="Требования к системе",  # default: root section
+                                                   smartirs="dnu")  # default: ntc
+print(pairs)
+# Output:
+# [['ЭФФЕКТИВНОЕ ФУНКЦИОНИРОВАНИЕ СИСТЕМЫ', 0.023], ['ИМЕЮЩИЙ НАВЫК РАБОТЫ', 0.023],
+# ['ТЕХНИЧЕСКАЯ ХАРАКТЕРИСТИКА КОМПЬЮТЕРА', 0.022], ['СОСТАВ МЕТОДИЧЕСКОГО ОБЕСПЕЧЕНИЯ', 0.021],
+# ['КОМПЬЮТЕР КОНЕЧНОГО ПОЛЬЗОВАТЕЛЯ', 0.0209], ['НЕСКОЛЬКО НЕЗАВИСИМЫЙ ПРОЕКТ', 0.02], ... ]
+# ======================================================================================================================
+
+# OTHER FEATURES
+# ======================================================================================================================
+# 1. string similarity
+ratio = langproc.strings_similarity(documents[0], documents[1])
+print(ratio)
+# Output:
+# 0.16151457061744964
+
+# 2. sentence segmentation (using rusenttokenize)
+sentences = langproc.sentenize(" ".join(documents))
+print(sentences)
+# Output:
+# ['Подсистема оперативного учета должна содержать механизмы,
+#   позволяющие вводить в систему и хранить в ней информацию о текущей деятельности организации',
+#  'Объектом автоматизации является процесс учета расчетов с работниками по оплате труда в организации,
+#   имеющей специфические принципы формирования расчетных сумм, в части расчета этих сумм и сбора данных из документов
+#   оперативного учета для проведения расчета',
+#  'Система должна сохранять работоспособность и обеспечивать восстановление своих функций при возникновении
+#   внештатных ситуаций']
+
+# 3. tokenization (using gensim)
+tokens = langproc.tokenize(text=documents[0],
+                           part_of_speech="NOUN")  # default: all parts of speech
+print(tokens)
+# Output:
+# ['подсистема', 'учёт', 'механизм', 'система', 'нея', 'информация', 'деятельность', 'организация']
+
+# 4. lemmatisation
+words = ["Подсистема", "оперативного", "учета", "должна", "содержать", "механизмы", "позволяющие", "вводить", "систему",
+         "хранить", "ней", "информацию", "текущей", "деятельности", "организации"]
+lemmas = langproc.lemmatize(words)
+print(lemmas)
+# Output:
+# ['подсистема', 'оперативный', 'учёт', 'должный', 'содержать', 'механизм', 'позволять', 'вводить', 'система', 
+# 'хранить', 'она', 'информация', 'текущий', 'деятельность', 'организация']
+# ======================================================================================================================
 ```
+
+## References
+
+- https://github.com/RaRe-Technologies/gensim
+- https://github.com/pullenti/PullentiPython
+- https://github.com/deepmipt/ru_sentence_tokenizer
