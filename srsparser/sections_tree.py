@@ -42,6 +42,12 @@ class SectionsTree:
                     node.parent = None
         return exporter.export(self.root)
 
+    def get_all_sections(self) -> list:
+        """
+        Returns element list of the :py:class:`Section` tree structure.
+        """
+        return [node for node in PreOrderIter(self.root)]
+
     def get_leaf_sections(self, section_name='') -> list:
         """
         Returns leaf element list of the :py:class:`Section` tree structure.
