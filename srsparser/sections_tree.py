@@ -46,7 +46,7 @@ class SectionsTree:
         """
         Returns leaf element list of the :py:class:`Section` tree structure.
 
-        If the parameter `structure_section_name` is explicitly specified,
+        If the parameter `section_name` is explicitly specified,
         then the list of leaf elements relative to the section of the same name is returned.
         """
         if section_name == '':
@@ -67,7 +67,7 @@ class SectionsTree:
         """
         Returns :py:class:`Section` tree structure text content.
 
-        If the parameter `structure_section_name` is explicitly specified,
+        If the parameter `section_name` is explicitly specified,
         then the list of leaf elements relative to the section of the same name is returned.
         """
         if section_name == '':

@@ -14,20 +14,20 @@ from srsparser.sections_tree import SectionsTree
 
 class Parser:
     """
-    Parser analyzes semi-structured .docx_path documents and forming sections tree documents according to the templates.
+    Parser analyzes semi-structured .docx documents and forming sections tree documents according to the templates.
     """
 
     def __init__(self, sections_tree_template: dict):
         """
         :param sections_tree_template: sections tree structure containing certain sections tree structure,
-            which will be filled text content according to the relevant .docx_path file.
+            which will be filled text content according to the relevant .docx file.
         """
         self.sections_tree = SectionsTree(sections_tree_template)
         self.nlp = LanguageProcessor(init_pullenti=False)
 
     def parse_docx(self, path: str) -> dict:
         """
-        Reads .docx_path document and returns sections tree structure filled according to the it's content.
+        Reads .docx document and returns sections tree structure filled according to the it's content.
         """
         document = Document(path)
         return self.get_sections_structure(document)
