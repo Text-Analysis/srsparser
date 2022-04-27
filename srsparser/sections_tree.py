@@ -81,6 +81,21 @@ class SectionsTree:
 
         return ". ".join([node.text for node in self.get_leaf_sections(section_name)])
 
+    def validate(self) -> bool:
+        """
+        Checks the section structure for validity.
+
+        :return: True - if valid, otherwise - False.
+        """
+        for node in PreOrderIter(self.root):
+            if not hasattr(node, 'name'):
+                return False
+            if hasattr(node, 'text') and node.children:
+                return False
+            if not (hasattr(node, 'text') or node.children):
+                return False
+        return True
+
     @staticmethod
     def get_root_value(structure: dict) -> str:
         """
