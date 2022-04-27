@@ -6,7 +6,7 @@ requirements = [
     'pullenti>=4.1',
     'pymorphy2>=0.9.1',
     'rusenttokenize>=0.0.5',
-    'python-docx_path>=0.8.11',
+    'python-docx>=0.8.11',
     'anytree>=2.8.0'
 ]
 
@@ -15,7 +15,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 
 setup(
     name='srsparser',
-    version='1.4.8',
+    version='1.4.9',
     author='Kurmyza Pavel',
     author_email='tmrrwnxtsn@gmail.com',
     project_urls={
