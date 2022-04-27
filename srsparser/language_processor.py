@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy
 from regex import regex as re
@@ -167,7 +167,7 @@ class LanguageProcessor:
         return cosine_similarity_ratio
 
     def get_tf_idf_pairs(self, documents: List[str], part_of_speech='',
-                         smartirs='ntc') -> List[List[List[str, numpy.float64]]]:
+                         smartirs='ntc') -> List[List[List[Tuple[str, numpy.float64]]]]:
         """
         Builds TF-IDF model for the documents and returns TF-IDF pairs.
 
@@ -197,14 +197,14 @@ class LanguageProcessor:
 
             tf_idf_weight = []
             for id, freq in structure:
-                tf_idf_weight.append([dictionary[id], around(freq, decimals=3)])
+                tf_idf_weight.append([dictionary[id], numpy.float64(around(freq, decimals=3))])
 
             tf_idf_weights.append(tf_idf_weight)
 
         return tf_idf_weights
 
     def get_structure_tf_idf_pairs(self, documents: List[dict], document_name: str, section_name='',
-                                   part_of_speech='', smartirs='ntc') -> List[List[str, numpy.float64]]:
+                                   part_of_speech='', smartirs='ntc') -> List[List[Tuple[str, numpy.float64]]]:
         """
         Returns TF-IDF pairs for the document structure that is contained among the objects of the MongoDB collection
         (`documents`) and has the name `document_name` (the name of the document from which the structure was derived).
@@ -260,7 +260,7 @@ class LanguageProcessor:
         return keywords
 
     def get_structure_rationized_keywords(self, documents: List[dict], document_name: str,
-                                          section_name='', smartirs='ntc') -> List[List[str, numpy.float64]]:
+                                          section_name='', smartirs='ntc') -> List[List[Tuple[str, numpy.float64]]]:
         """
         Returns a list of keywords extracted from the structure and the TF-IDF weights corresponding to them.
 
